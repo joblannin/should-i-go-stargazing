@@ -1,5 +1,5 @@
 [build]
-  command = "echo 'No build step required'"
+  command = "cd .netlify/functions && npm install"
   functions = ".netlify/functions"
   publish = "."
   ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ./package-lock.json" 
