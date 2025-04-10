@@ -59,32 +59,55 @@
             `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${apiKey}`
           );
           const geoData = await geoRes.json();
-          if (!geoData.length) throw new Error("City not found.");
+          
+          if (!geoRes.ok) {
+            throw new Error(`Weather API error: ${geoData.message || 'Unknown error'}`);
+          }
+          
+          if (!geoData.length) {
+            throw new Error(`City not found. Please try a more specific location (e.g., "Sydney, Australia" or "New York, US")`);
+          }
+          
           lat = geoData[0].lat;
           lon = geoData[0].lon;
+          city = `${geoData[0].name}, ${geoData[0].country}`; // Use the standardized city name
         }
+
         updateMap(lat, lon);
         fetchRiseSet(lat, lon);
+        
         // Step 2: Get One Call Data (weather + clouds)
         const weatherRes = await fetch(
           `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,daily,alerts&units=metric&appid=${apiKey}`
         );
+        
+        if (!weatherRes.ok) {
+          const weatherData = await weatherRes.json();
+          throw new Error(`Weather API error: ${weatherData.message || 'Unknown error'}`);
+        }
+        
         const weatherData = await weatherRes.json();
         const now = new Date().getTime() / 1000;
-const sunrise = weatherData.current.sunrise;
-const sunset = weatherData.current.sunset;
+        const sunrise = weatherData.current.sunrise;
+        const sunset = weatherData.current.sunset;
 
-const isNight = now < sunrise || now > sunset;
+        const isNight = now < sunrise || now > sunset;
 
-if (!isNight) {
-  result.innerText = "☀️ It's currently daytime at this location.\nPlease check back after sunset for stargazing conditions.";
-  return;
-}
+        if (!isNight) {
+          result.innerText = "☀️ It's currently daytime at this location.\nPlease check back after sunset for stargazing conditions.";
+          return;
+        }
 
         // Step 3: Get Air Quality
         const airRes = await fetch(
           `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`
         );
+        
+        if (!airRes.ok) {
+          const airData = await airRes.json();
+          throw new Error(`Air Quality API error: ${airData.message || 'Unknown error'}`);
+        }
+        
         const airData = await airRes.json();
         const aqi = airData.list[0].main.aqi;
         const aqiRating = ["❓", "Good 🌿", "Fair 🌤️", "Moderate 😐", "Poor 😷", "Very Poor 💀"][aqi];
@@ -117,7 +140,7 @@ if (!isNight) {
         result.innerText = output;
       } catch (err) {
         console.error("Error:", err);
-        result.innerText = "⚠️ Error checking conditions. Try again.";
+        result.innerText = `⚠️ ${err.message}`;
       }
     }
 
@@ -192,20 +215,33 @@ function updateMap(lat, lon) {
 async function fetchRiseSet(lat, lon) {
     try {
       console.log('Fetching rise/set times for:', { lat, lon });
-      const res = await fetch("/.netlify/functions/getRiseSet", {
+      const functionUrl = "/.netlify/functions/getRiseSet";
+      console.log('Calling function at:', functionUrl);
+      
+      const res = await fetch(functionUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lat, lon }),
       });
-  
-      const data = await res.json();
-      console.log('Response status:', res.status);
-      console.log('Response data:', data);
-
+      
+      console.log('Function response status:', res.status);
+      console.log('Function response headers:', Object.fromEntries(res.headers.entries()));
+      
       if (!res.ok) {
-        throw new Error(data.details || data.error || 'Failed to fetch planetary data');
+        console.error('Function error response:', await res.text());
+        throw new Error(`Serverless function error: ${res.status} ${res.statusText}`);
       }
-  
+
+      const text = await res.text();
+      console.log('Raw function response:', text);
+      
+      if (!text) {
+        throw new Error('Empty response from serverless function');
+      }
+
+      const data = JSON.parse(text);
+      console.log('Parsed function response:', data);
+
       if (!data?.data?.table?.rows) {
         console.error("No rise/set data returned:", data);
         document.getElementById("result").innerText += "\n⚠️ No planetary data available.";
