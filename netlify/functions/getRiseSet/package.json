@@ -1,0 +1,9 @@
+{
+  "name": "get-rise-set",
+  "version": "1.0.0",
+  "description": "Netlify function to get planet rise/set times",
+  "main": "getRiseSet.js",
+  "dependencies": {
+    "axios": "^1.6.7"
+  }
+} 

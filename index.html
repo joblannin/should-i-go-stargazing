@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Should I Go Stargazing?</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 2rem;
+      font-family: sans-serif;
+      background: radial-gradient(#000 60%, #111);
+      color: #eee;
+      text-align: center;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 1rem;
+      margin: 0.5rem;
+    }
+    #result {
+      margin-top: 2rem;
+      font-size: 1.2rem;
+      white-space: pre-line;
+      text-align: left;
+    }
+  </style>
+  <link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+</head>
+<body>
+  <h1>🔭 Should I Go Stargazing?</h1>
+  <p>Enter a city or use your current location:</p>
+  <input type="text" id="cityInput" placeholder="e.g. San Francisco" />
+  <br />
+  <button id="checkCityBtn">Check by City</button>
+  <button id="gpsBtn">Use My Location</button>
+  <div id="result"></div>
+  <div id="map" style="height: 300px; margin-top: 2rem; border-radius: 10px;"></div>
+
+
+  <script>
+    const apiKey = "c85c9a660f960eb3934c56c59b8127bc"; // Replace with your real key
+    const result = document.getElementById("result");
+
+    async function checkConditions(city = null, lat = null, lon = null) {
+      result.innerText = "🔄 Checking conditions...";
+
+      try {
+        // Step 1: Get coordinates if using city
+        if (city) {
+          const geoRes = await fetch(
+            `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${apiKey}`
+          );
+          const geoData = await geoRes.json();
+          if (!geoData.length) throw new Error("City not found.");
+          lat = geoData[0].lat;
+          lon = geoData[0].lon;
+        }
+        updateMap(lat, lon);
+        fetchRiseSet(lat, lon);
+        // Step 2: Get One Call Data (weather + clouds)
+        const weatherRes = await fetch(
+          `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,daily,alerts&units=metric&appid=${apiKey}`
+        );
+        const weatherData = await weatherRes.json();
+        const now = new Date().getTime() / 1000;
+const sunrise = weatherData.current.sunrise;
+const sunset = weatherData.current.sunset;
+
+const isNight = now < sunrise || now > sunset;
+
+if (!isNight) {
+  result.innerText = "☀️ It's currently daytime at this location.\nPlease check back after sunset for stargazing conditions.";
+  return;
+}
+
+        // Step 3: Get Air Quality
+        const airRes = await fetch(
+          `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`
+        );
+        const airData = await airRes.json();
+        const aqi = airData.list[0].main.aqi;
+        const aqiRating = ["❓", "Good 🌿", "Fair 🌤️", "Moderate 😐", "Poor 😷", "Very Poor 💀"][aqi];
+
+        // Step 4: Calculate Moon Phase (basic local calc)
+        const moon = getMoonPhase();
+        const cloudsNow = weatherData.current.clouds;
+
+        let output = `📍 Location: ${city || "Your Location"}\n\n`;
+        output += `🌙 Moon Phase: ${moon.phase} (${moon.emoji})\n`;
+        output += `☁️ Cloud cover now: ${cloudsNow}%\n`;
+        output += `😮‍💨 Air Quality Index: ${aqi} - ${aqiRating}\n\n`;
+
+        output += `🌥️ Hourly Cloud Forecast (next 12 hrs):\n`;
+        for (let i = 0; i < 12; i++) {
+          const hour = new Date(weatherData.hourly[i].dt * 1000).getHours();
+          const clouds = weatherData.hourly[i].clouds;
+          output += `${hour}:00 → ${clouds}% clouds\n`;
+        }
+
+        // Stargazing score (basic)
+        if (cloudsNow < 30 && aqi < 3) {
+          output += `\n✅ Yes! Excellent stargazing conditions 🌌`;
+        } else if (cloudsNow < 50 && aqi < 4) {
+          output += `\n🤔 Maybe. Mixed conditions, bring binoculars.`;
+        } else {
+          output += `\n❌ Not a great night — too cloudy or poor air.`;
+        }
+
+        result.innerText = output;
+      } catch (err) {
+        console.error("Error:", err);
+        result.innerText = "⚠️ Error checking conditions. Try again.";
+      }
+    }
+
+    function useMyLocation() {
+      if (!navigator.geolocation) {
+        result.innerText = "⚠️ Geolocation not supported.";
+        return;
+      }
+
+      result.innerText = "📡 Getting location...";
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          checkConditions(null, pos.coords.latitude, pos.coords.longitude);
+        },
+        (err) => {
+          result.innerText = "⚠️ Could not get location: " + err.message;
+        }
+      );
+    }
+
+    function checkByCity() {
+      const city = document.getElementById("cityInput").value.trim();
+      if (!city) {
+        result.innerText = "🔍 Please enter a full location (e.g. Lilydale, Vic, Aus).";
+        return;
+      }
+      checkConditions(city);
+    }
+
+    // Simple Moon Phase Calc (based on days since known new moon)
+    function getMoonPhase() {
+      const phases = [
+        { name: "New Moon", emoji: "🌑" },
+        { name: "Waxing Crescent", emoji: "🌒" },
+        { name: "First Quarter", emoji: "🌓" },
+        { name: "Waxing Gibbous", emoji: "🌔" },
+        { name: "Full Moon", emoji: "🌕" },
+        { name: "Waning Gibbous", emoji: "🌖" },
+        { name: "Last Quarter", emoji: "🌗" },
+        { name: "Waning Crescent", emoji: "🌘" },
+      ];
+      const now = new Date();
+      const newMoon = new Date("2024-04-08T18:21:00Z"); // known new moon
+      const diffDays = (now - newMoon) / (1000 * 60 * 60 * 24);
+      const phaseIndex = Math.floor(((diffDays % 29.53) / 29.53) * 8) % 8;
+      return { phase: phases[phaseIndex].name, emoji: phases[phaseIndex].emoji };
+    }
+
+    // Bind buttons
+    document.getElementById("checkCityBtn").addEventListener("click", checkByCity);
+    document.getElementById("gpsBtn").addEventListener("click", useMyLocation);
+
+    // Map setup
+let map;
+function updateMap(lat, lon) {
+  if (!map) {
+    map = L.map("map").setView([lat, lon], 8);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors",
+    }).addTo(map);
+    L.marker([lat, lon]).addTo(map).bindPopup("Observation Location").openPopup();
+  } else {
+    map.setView([lat, lon], 8);
+    map.eachLayer((layer) => {
+      if (layer instanceof L.Marker) {
+        map.removeLayer(layer);
+      }
+    });
+    L.marker([lat, lon]).addTo(map).bindPopup("Observation Location").openPopup();
+  }
+}
+async function fetchRiseSet(lat, lon) {
+    try {
+      const res = await fetch("/.netlify/functions/getRiseSet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lat, lon }),
+      });
+  
+      const data = await res.json();
+  
+      if (!data?.data?.table?.rows) {
+        console.error("No rise/set data returned:", data);
+        document.getElementById("result").innerText += "\n⚠️ No planetary data available.";
+        return;
+      }
+  
+      const rows = data.data.table.rows;
+  
+      let output = "\n🌌 Planetary Rise/Set Times:\n";
+      for (const planet of rows) {
+        const name = planet.entry.body;
+        const rise = new Date(planet.entry.rise).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        const set = new Date(planet.entry.set).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+  
+        const emojiMap = {
+          moon: "🌙",
+          jupiter: "🪐",
+          saturn: "🪐",
+          venus: "🌟",
+          mars: "🔴",
+        };
+  
+        output += `${emojiMap[name] || "✨"} ${name.charAt(0).toUpperCase() + name.slice(1)}: ${rise} → ${set}\n`;
+      }
+  
+      // Append to the existing result
+      document.getElementById("result").innerText += `\n${output}`;
+    } catch (err) {
+      console.error("Rise/Set error:", err);
+      document.getElementById("result").innerText += `\n⚠️ Error loading planetary data.`;
+    }
+  }
+  
+  </script>
+</body>
+</html>
