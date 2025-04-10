@@ -35,7 +35,7 @@ exports.handler = async function(event, context) {
         bodies: ['moon', 'jupiter', 'saturn', 'venus', 'mars']
       },
       headers: {
-        'Authorization': `Basic ${Buffer.from(`${process.env.ASTRONOMY_API_ID}:${process.env.ASTRONOMY_API_SECRET}`).toString('base64')}`
+        'Authorization': `Basic ${Buffer.from(`${process.env.ASTRONOMYAPIID}:${process.env.ASTRONOMYAPISECRET}`).toString('base64')}`
       }
     });
 
