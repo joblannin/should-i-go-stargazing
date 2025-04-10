@@ -2,5 +2,8 @@
   "name": "should-i-go-stargazing",
   "version": "1.0.0",
   "description": "A web app to check stargazing conditions",
-  "private": true
+  "private": true,
+  "scripts": {
+    "build": "echo 'No build step required'"
+  }
 } 
