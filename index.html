@@ -191,13 +191,20 @@ function updateMap(lat, lon) {
 }
 async function fetchRiseSet(lat, lon) {
     try {
+      console.log('Fetching rise/set times for:', { lat, lon });
       const res = await fetch("/.netlify/functions/getRiseSet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lat, lon }),
       });
   
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.details || 'Failed to fetch planetary data');
+      }
+
       const data = await res.json();
+      console.log('Received rise/set data:', data);
   
       if (!data?.data?.table?.rows) {
         console.error("No rise/set data returned:", data);
@@ -234,7 +241,7 @@ async function fetchRiseSet(lat, lon) {
       document.getElementById("result").innerText += `\n${output}`;
     } catch (err) {
       console.error("Rise/Set error:", err);
-      document.getElementById("result").innerText += `\n⚠️ Error loading planetary data.`;
+      document.getElementById("result").innerText += `\n⚠️ Error loading planetary data: ${err.message}`;
     }
   }
   
