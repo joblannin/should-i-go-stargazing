@@ -198,13 +198,13 @@ async function fetchRiseSet(lat, lon) {
         body: JSON.stringify({ lat, lon }),
       });
   
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.details || 'Failed to fetch planetary data');
-      }
-
       const data = await res.json();
-      console.log('Received rise/set data:', data);
+      console.log('Response status:', res.status);
+      console.log('Response data:', data);
+
+      if (!res.ok) {
+        throw new Error(data.details || data.error || 'Failed to fetch planetary data');
+      }
   
       if (!data?.data?.table?.rows) {
         console.error("No rise/set data returned:", data);
