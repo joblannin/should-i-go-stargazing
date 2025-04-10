@@ -227,19 +227,23 @@ async function fetchRiseSet(lat, lon) {
       console.log('Function response status:', res.status);
       console.log('Function response headers:', Object.fromEntries(res.headers.entries()));
       
+      const contentType = res.headers.get('content-type');
+      console.log('Content-Type:', contentType);
+      
       if (!res.ok) {
-        console.error('Function error response:', await res.text());
+        const errorText = await res.text();
+        console.error('Function error response:', errorText);
         throw new Error(`Serverless function error: ${res.status} ${res.statusText}`);
       }
 
-      const text = await res.text();
-      console.log('Raw function response:', text);
-      
-      if (!text) {
-        throw new Error('Empty response from serverless function');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await res.text();
+        console.error('Unexpected content type:', contentType);
+        console.error('Response text:', text);
+        throw new Error('Serverless function returned non-JSON response. Please check the function deployment.');
       }
 
-      const data = JSON.parse(text);
+      const data = await res.json();
       console.log('Parsed function response:', data);
 
       if (!data?.data?.table?.rows) {
