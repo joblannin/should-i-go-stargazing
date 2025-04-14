@@ -91,14 +91,14 @@
         const sunrise = weatherData.current.sunrise;
         const sunset = weatherData.current.sunset;
 
-        // Get current time at location
-        const currentTime = new Date();
+        // Get current time at location using the timezone offset from the API
         const timezoneOffset = weatherData.timezone_offset;
-        const localTime = new Date(currentTime.getTime() + timezoneOffset * 1000);
+        const localTime = new Date((now + timezoneOffset) * 1000);
         const formattedTime = localTime.toLocaleTimeString([], { 
             hour: '2-digit', 
             minute: '2-digit',
-            hour12: true 
+            hour12: true,
+            timeZone: 'UTC' // This ensures we're working with UTC time
         });
 
         // Find the next nighttime period
