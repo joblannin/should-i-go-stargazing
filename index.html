@@ -74,7 +74,6 @@
         }
 
         updateMap(lat, lon);
-        fetchRiseSet(lat, lon);
         
         // Step 2: Get One Call Data (weather + clouds)
         const weatherRes = await fetch(
@@ -245,79 +244,7 @@ function updateMap(lat, lon) {
     L.marker([lat, lon]).addTo(map).bindPopup("Observation Location").openPopup();
   }
 }
-async function fetchRiseSet(lat, lon) {
-    try {
-      console.log('Fetching rise/set times for:', { lat, lon });
-      const functionUrl = "/.netlify/functions/getRiseSet";
-      console.log('Calling function at:', functionUrl);
-      
-      const res = await fetch(functionUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lat, lon }),
-      });
-      
-      console.log('Function response status:', res.status);
-      console.log('Function response headers:', Object.fromEntries(res.headers.entries()));
-      
-      const contentType = res.headers.get('content-type');
-      console.log('Content-Type:', contentType);
-      
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('Function error response:', errorText);
-        throw new Error(`Serverless function error: ${res.status} ${res.statusText}`);
-      }
 
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await res.text();
-        console.error('Unexpected content type:', contentType);
-        console.error('Response text:', text);
-        throw new Error('Serverless function returned non-JSON response. Please check the function deployment.');
-      }
-
-      const data = await res.json();
-      console.log('Parsed function response:', data);
-
-      if (!data?.data?.table?.rows) {
-        console.error("No rise/set data returned:", data);
-        document.getElementById("result").innerText += "\n⚠️ No planetary data available.";
-        return;
-      }
-  
-      const rows = data.data.table.rows;
-  
-      let output = "\n🌌 Planetary Rise/Set Times:\n";
-      for (const planet of rows) {
-        const name = planet.entry.body;
-        const rise = new Date(planet.entry.rise).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-        const set = new Date(planet.entry.set).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-  
-        const emojiMap = {
-          moon: "🌙",
-          jupiter: "🪐",
-          saturn: "🪐",
-          venus: "🌟",
-          mars: "🔴",
-        };
-  
-        output += `${emojiMap[name] || "✨"} ${name.charAt(0).toUpperCase() + name.slice(1)}: ${rise} → ${set}\n`;
-      }
-  
-      // Append to the existing result
-      document.getElementById("result").innerText += `\n${output}`;
-    } catch (err) {
-      console.error("Rise/Set error:", err);
-      document.getElementById("result").innerText += `\n⚠️ Error loading planetary data: ${err.message}`;
-    }
-  }
-  
   </script>
 </body>
 </html>
