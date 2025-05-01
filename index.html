@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Should I Go Stargazing?</title>
   <style>
     body {
@@ -24,6 +27,100 @@
       white-space: pre-line;
       text-align: left;
     }
+    .autocomplete-container {
+      position: relative;
+      display: inline-block;
+    }
+    .autocomplete-suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #222;
+      border: 1px solid #444;
+      border-radius: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      margin: 0 0.5rem;
+    }
+    .suggestion-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      text-align: left;
+    }
+    .suggestion-item:hover {
+      background: #333;
+    }
+    .favorites-section {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      border: 1px solid #444;
+    }
+
+    .favorites-title {
+      color: #fff;
+      margin-bottom: 10px;
+      font-size: 1.2em;
+    }
+
+    .favorites-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .favorite-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 8px 15px;
+      border-radius: 20px;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .favorite-item:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .favorite-item .remove-btn {
+      color: #ff4444;
+      font-size: 1.2em;
+      cursor: pointer;
+      padding: 0 5px;
+    }
+
+    .favorite-item .edit-btn {
+      color: #44ff44;
+      font-size: 1.2em;
+      cursor: pointer;
+      padding: 0 5px;
+    }
+
+    .save-favorite-btn {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 20px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .save-favorite-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .save-favorite-btn.saved {
+      background: rgba(68, 255, 68, 0.2);
+      color: #44ff44;
+    }
   </style>
   <link
   rel="stylesheet"
@@ -32,22 +129,95 @@
 <script
   src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js?v=1"></script>
 
 </head>
 <body>
-  <h1>🔭 Should I Go Stargazing?</h1>
-  <p>Enter a city or use your current location:</p>
-  <input type="text" id="cityInput" placeholder="e.g. San Francisco" />
-  <br />
-  <button id="checkCityBtn">Check by City</button>
-  <button id="gpsBtn">Use My Location</button>
-  <div id="result"></div>
-  <div id="map" style="height: 300px; margin-top: 2rem; border-radius: 10px;"></div>
+  <div class="container">
+    <h1>Should I Go Stargazing?</h1>
+    
+    <!-- Favorites Section -->
+    <div class="favorites-section">
+      <div class="favorites-title">⭐ Favorite Locations</div>
+      <div class="favorites-list" id="favoritesList">
+        <!-- Favorites will be added here dynamically -->
+      </div>
+    </div>
 
+    <div class="search-container">
+      <p>Enter a city or use your current location:</p>
+      <div class="autocomplete-container">
+        <input type="text" id="cityInput" placeholder="e.g. San Francisco" autocomplete="off" />
+        <div id="suggestions" class="autocomplete-suggestions" style="display: none;"></div>
+      </div>
+      <br />
+      <button id="checkCityBtn">Check by City</button>
+      <button id="gpsBtn">Use My Location</button>
+      <div id="result"></div>
+      <button class="save-favorite-btn" id="saveFavoriteBtn">Save as Favorite</button>
+    </div>
+
+    <div id="map" style="height: 300px; margin-top: 2rem; border-radius: 10px;"></div>
+  </div>
 
   <script>
     const apiKey = "c85c9a660f960eb3934c56c59b8127bc"; // Replace with your real key
     const result = document.getElementById("result");
+    const cityInput = document.getElementById("cityInput");
+    const suggestionsDiv = document.getElementById("suggestions");
+    let debounceTimer;
+
+    // Add event listener for input changes
+    cityInput.addEventListener("input", function() {
+      clearTimeout(debounceTimer);
+      const query = this.value.trim();
+      
+      if (query.length < 2) {
+        suggestionsDiv.style.display = "none";
+        return;
+      }
+
+      debounceTimer = setTimeout(() => {
+        fetchCitySuggestions(query);
+      }, 300);
+    });
+
+    // Add event listener for suggestion clicks
+    suggestionsDiv.addEventListener("click", function(e) {
+      if (e.target.classList.contains("suggestion-item")) {
+        cityInput.value = e.target.textContent;
+        suggestionsDiv.style.display = "none";
+        checkByCity();
+      }
+    });
+
+    // Close suggestions when clicking outside
+    document.addEventListener("click", function(e) {
+      if (!e.target.closest(".autocomplete-container")) {
+        suggestionsDiv.style.display = "none";
+      }
+    });
+
+    async function fetchCitySuggestions(query) {
+      try {
+        const res = await fetch(
+          `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=5&appid=${apiKey}`
+        );
+        const data = await res.json();
+        
+        if (data.length > 0) {
+          suggestionsDiv.innerHTML = data
+            .map(city => `<div class="suggestion-item">${city.name}, ${city.country}</div>`)
+            .join("");
+          suggestionsDiv.style.display = "block";
+        } else {
+          suggestionsDiv.style.display = "none";
+        }
+      } catch (err) {
+        console.error("Error fetching suggestions:", err);
+        suggestionsDiv.style.display = "none";
+      }
+    }
 
     async function checkConditions(city = null, lat = null, lon = null) {
       result.innerText = "🔄 Checking conditions...";
@@ -100,6 +270,50 @@
             timeZone: 'UTC' // This ensures we're working with UTC time
         });
 
+        // Format time function
+        function formatTime(timestamp) {
+            return new Date((timestamp + timezoneOffset) * 1000).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true,
+                timeZone: 'UTC'
+            });
+        }
+
+        // Calculate astronomical events using suncalc
+        const date = new Date();
+        const tomorrow = new Date(date.getTime() + 24*60*60*1000);
+        
+        // Get today's astronomical events
+        const todayTimes = SunCalc.getTimes(date, lat, lon);
+        const tomorrowTimes = SunCalc.getTimes(tomorrow, lat, lon);
+        
+        // Get astronomical twilight times with fallback to sunset/sunrise + 1.5 hours
+        let astronomicalDusk, astronomicalDawn;
+        
+        if (todayTimes.astronomicalDusk && tomorrowTimes.astronomicalDawn) {
+            astronomicalDusk = todayTimes.astronomicalDusk;
+            astronomicalDawn = tomorrowTimes.astronomicalDawn;
+        } else {
+            // Fallback calculation if astronomical twilight is not available
+            astronomicalDusk = new Date(todayTimes.sunset.getTime() + 1.5 * 60 * 60 * 1000);
+            astronomicalDawn = new Date(tomorrowTimes.sunrise.getTime() - 1.5 * 60 * 60 * 1000);
+        }
+        
+        // Convert to Unix timestamps
+        const astronomicalDuskUnix = astronomicalDusk.getTime() / 1000;
+        const astronomicalDawnUnix = astronomicalDawn.getTime() / 1000;
+
+        // Format time function for astronomical events
+        function formatAstroTime(date) {
+            return new Date(date.getTime() + timezoneOffset * 1000).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true,
+                timeZone: 'UTC'
+            });
+        }
+        
         // Find the next nighttime period
         let nextNightStart, nextNightEnd;
         if (now < sunrise) {
@@ -149,6 +363,11 @@
 
         let output = `📍 Location: ${city || "Your Location"}\n`;
         output += `🕒 Current Local Time: ${formattedTime}\n\n`;
+        output += `🌅 Sunrise: ${formatTime(sunrise)}\n`;
+        output += `🌇 Sunset: ${formatTime(sunset)}\n`;
+        output += `🌌 Astronomical Twilight (True Darkness):\n`;
+        output += `   Starts: ${formatAstroTime(astronomicalDusk)}\n`;
+        output += `   Ends: ${formatAstroTime(astronomicalDawn)}\n\n`;
         output += `🌙 Moon Phase: ${moon.phase} (${moon.emoji})\n`;
         output += `☁️ Average cloud cover during next nighttime: ${Math.round(avgClouds)}%\n`;
         output += `😮‍💨 Air Quality Index: ${aqi} - ${aqiRating}\n\n`;
@@ -226,25 +445,126 @@
     document.getElementById("gpsBtn").addEventListener("click", useMyLocation);
 
     // Map setup
-let map;
-function updateMap(lat, lon) {
-  if (!map) {
-    map = L.map("map").setView([lat, lon], 8);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors",
-    }).addTo(map);
-    L.marker([lat, lon]).addTo(map).bindPopup("Observation Location").openPopup();
-  } else {
-    map.setView([lat, lon], 8);
-    map.eachLayer((layer) => {
-      if (layer instanceof L.Marker) {
-        map.removeLayer(layer);
+    let map;
+    function updateMap(lat, lon) {
+      if (!map) {
+        map = L.map("map").setView([lat, lon], 8);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap contributors",
+        }).addTo(map);
+        L.marker([lat, lon]).addTo(map).bindPopup("Observation Location").openPopup();
+      } else {
+        map.setView([lat, lon], 8);
+        map.eachLayer((layer) => {
+          if (layer instanceof L.Marker) {
+            map.removeLayer(layer);
+          }
+        });
+        L.marker([lat, lon]).addTo(map).bindPopup("Observation Location").openPopup();
       }
-    });
-    L.marker([lat, lon]).addTo(map).bindPopup("Observation Location").openPopup();
-  }
-}
+    }
 
+    // Favorites functionality
+    let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    let currentLocation = null;
+
+    function updateFavoritesList() {
+      const favoritesList = document.getElementById('favoritesList');
+      favoritesList.innerHTML = '';
+      
+      favorites.forEach((fav, index) => {
+        const favItem = document.createElement('div');
+        favItem.className = 'favorite-item';
+        favItem.innerHTML = `
+          <span>${fav.name}</span>
+          <span class="edit-btn" onclick="editFavorite(${index})">✏️</span>
+          <span class="remove-btn" onclick="removeFavorite(${index})">×</span>
+        `;
+        favItem.onclick = (e) => {
+          if (!e.target.classList.contains('remove-btn') && !e.target.classList.contains('edit-btn')) {
+            searchLocation(fav.name);
+          }
+        };
+        favoritesList.appendChild(favItem);
+      });
+    }
+
+    function saveFavorite() {
+      if (!currentLocation) return;
+      
+      const name = prompt('Enter a name for this location:', currentLocation.name);
+      if (!name) return;
+
+      if (favorites.length >= 6) {
+        alert('You can only save up to 6 favorite locations. Please remove one first.');
+        return;
+      }
+
+      favorites.push({
+        name: name,
+        lat: currentLocation.lat,
+        lon: currentLocation.lon
+      });
+
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+      updateFavoritesList();
+      updateSaveButton();
+    }
+
+    function removeFavorite(index) {
+      if (confirm('Are you sure you want to remove this favorite?')) {
+        favorites.splice(index, 1);
+        localStorage.setItem('favorites', JSON.stringify(favorites));
+        updateFavoritesList();
+        updateSaveButton();
+      }
+    }
+
+    function editFavorite(index) {
+      const newName = prompt('Enter a new name for this location:', favorites[index].name);
+      if (newName) {
+        favorites[index].name = newName;
+        localStorage.setItem('favorites', JSON.stringify(favorites));
+        updateFavoritesList();
+      }
+    }
+
+    function updateSaveButton() {
+      const saveBtn = document.getElementById('saveFavoriteBtn');
+      if (!currentLocation) {
+        saveBtn.style.display = 'none';
+        return;
+      }
+
+      saveBtn.style.display = 'block';
+      const isSaved = favorites.some(fav => 
+        fav.lat === currentLocation.lat && fav.lon === currentLocation.lon
+      );
+      saveBtn.textContent = isSaved ? '✓ Saved to Favorites' : 'Save as Favorite';
+      saveBtn.className = `save-favorite-btn ${isSaved ? 'saved' : ''}`;
+    }
+
+    // Modify the existing searchLocation function
+    async function searchLocation(city) {
+      try {
+        // ... existing searchLocation code ...
+
+        // Update current location and save button
+        currentLocation = { name: city, lat, lon };
+        updateSaveButton();
+
+        // ... rest of the existing searchLocation code ...
+      } catch (error) {
+        console.error('Error:', error);
+        result.textContent = 'Error fetching data. Please try again.';
+      }
+    }
+
+    // Initialize favorites list
+    updateFavoritesList();
+
+    // Add event listener for save button
+    document.getElementById('saveFavoriteBtn').addEventListener('click', saveFavorite);
   </script>
 </body>
 </html>
