@@ -7,138 +7,492 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>Should I Go Stargazing?</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css?v=1" />
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js?v=1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.min.js?v=1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.0.0/astronomy.js"></script>
   <style>
     body {
       margin: 0;
       padding: 2rem;
-      font-family: sans-serif;
+      font-family: Arial, sans-serif;
       background: radial-gradient(#000 60%, #111);
       color: #eee;
       text-align: center;
+      min-height: 100vh;
     }
-    input, button {
-      padding: 10px;
-      font-size: 1rem;
-      margin: 0.5rem;
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #2d2d2d;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
     }
-    #result {
-      margin-top: 2rem;
+    .banner {
+      width: 100%;
+      height: 300px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    h1 {
+      text-align: center;
+      color: #4a90e2;
+      margin: 0 0 0.5rem 0;
+      padding: 1rem 0 0 0;
+      font-size: 2.5rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      width: 100%;
+      display: block;
+    }
+    .subtitle {
+      text-align: center;
+      color: #8ab4e6;
+      margin: 0 0 1.5rem 0;
       font-size: 1.2rem;
-      white-space: pre-line;
-      text-align: left;
+      font-style: italic;
+    }
+    .subtitle a {
+      color: #8ab4e6;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    .subtitle a:hover {
+      color: #4a90e2;
+      text-decoration: underline;
+    }
+    .favorites-section {
+      margin: 0 0 2rem 0;
+      padding: 1.5rem;
+      background-color: #3d3d3d;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .favorites-title {
+      font-size: 1.2rem;
+      color: #4a90e2;
+      margin-bottom: 1rem;
+      font-weight: bold;
+    }
+    .favorites-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+      justify-content: center;
+    }
+    .favorite-item {
+      background-color: #4a90e2;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.2s;
+    }
+    .favorite-item:hover {
+      transform: translateY(-2px);
+    }
+    .search-container {
+      background-color: #3d3d3d;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
     }
     .autocomplete-container {
       position: relative;
-      display: inline-block;
+      margin-bottom: 1rem;
     }
-    .autocomplete-suggestions {
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #4a90e2;
+      border-radius: 8px;
+      background-color: #2d2d2d;
+      color: #ffffff;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+    input:focus {
+      outline: none;
+      border-color: #357abd;
+    }
+    .input-group {
+      display: flex;
+      gap: 12px;
+      margin: 1rem 0;
+    }
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      background-color: #4a90e2;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #357abd;
+      transform: translateY(-2px);
+    }
+    #map {
+      height: 300px;
+      margin: 2rem 0;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    #result {
+      background-color: #3d3d3d;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.5rem;
+      text-align: left;
+    }
+    .location-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #4a90e2;
+    }
+    .save-favorite-btn {
+      background-color: #4CAF50;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+    }
+    .save-favorite-btn:hover {
+      background-color: #45a049;
+    }
+    .save-favorite-btn.saved {
+      background-color: #666;
+      cursor: default;
+    }
+    .time-info, .sun-times, .astronomical-twilight, .moon-info, .cloud-info, .cloud-forecast, .recommendation {
+      margin: 1rem 0;
+      padding: 1rem;
+      background-color: #2d2d2d;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .recommendation {
+      font-weight: bold;
+      color: #4CAF50;
+      font-size: 1.1rem;
+      text-align: center;
+      padding: 1rem;
+      border: 2px solid #4CAF50;
+    }
+    .suggestions {
       position: absolute;
       top: 100%;
       left: 0;
       right: 0;
-      background: #222;
-      border: 1px solid #444;
-      border-radius: 4px;
+      background-color: #2d2d2d;
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      z-index: 1000;
       max-height: 200px;
       overflow-y: auto;
-      z-index: 1000;
-      margin: 0 0.5rem;
     }
     .suggestion-item {
-      padding: 8px 12px;
+      padding: 10px;
       cursor: pointer;
-      text-align: left;
+      transition: background-color 0.2s;
     }
     .suggestion-item:hover {
-      background: #333;
+      background-color: #4a90e2;
     }
-    .favorites-section {
-      background: rgba(0, 0, 0, 0.7);
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 10px;
-      border: 1px solid #444;
+    .weather-details {
+      margin: 1rem 0;
+      padding: 1rem;
+      background-color: #2d2d2d;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
-
-    .favorites-title {
-      color: #fff;
-      margin-bottom: 10px;
-      font-size: 1.2em;
-    }
-
-    .favorites-list {
+    .weather-main {
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .favorite-item {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 8px 15px;
-      border-radius: 20px;
-      color: #fff;
-      cursor: pointer;
-      display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 8px;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #4a90e2;
+    }
+    .temperature {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #4a90e2;
+    }
+    .weather-condition {
+      font-size: 1.2rem;
+      color: #8ab4e6;
+      text-transform: capitalize;
+    }
+    .weather-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      text-align: left;
+    }
+    .weather-stats div {
+      padding: 0.5rem;
+      background-color: #3d3d3d;
+      border-radius: 4px;
+    }
+    .current-conditions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin: 1rem 0;
+      padding: 1rem;
+      background-color: #2d2d2d;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .current-status-heading {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #4a90e2;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+    .current-time {
+      font-size: 1.1rem;
+      padding: 0.5rem;
+      text-align: center;
+      background-color: #3d3d3d;
+      border-radius: 4px;
+    }
+    .temp-feels, .humidity-wind {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+    .current-temp, .current-feels, .current-humidity, .current-wind {
+      font-size: 1.1rem;
+      padding: 0.5rem;
+      text-align: center;
+      background-color: #3d3d3d;
+      border-radius: 4px;
+    }
+    .weather-details {
+      margin-top: 1rem;
+    }
+    .weather-main {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #4a90e2;
+    }
+    .weather-condition {
+      font-size: 1.2rem;
+      color: #8ab4e6;
+      text-transform: capitalize;
+    }
+    .moon-info {
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      background-color: #2d2d2d;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .moon-heading {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #4a90e2;
+      margin-bottom: 0.3rem;
+      text-align: center;
+    }
+    .moon-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      background-color: #3d3d3d;
+      border-radius: 4px;
+      padding: 0.5rem;
+    }
+    .moon-phase {
+      font-size: 1rem;
+      text-align: center;
+      font-weight: bold;
+    }
+    .moon-description {
+      font-size: 0.9rem;
+      text-align: center;
+      color: #8ab4e6;
+    }
+    .moon-links {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.3rem;
+      padding-top: 0.3rem;
+      border-top: 1px solid #4a90e2;
+    }
+    .moon-link {
+      color: #4a90e2;
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 0.3rem 0.5rem;
+      border-radius: 4px;
+      transition: all 0.3s ease;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .moon-link:hover {
+      background-color: #4a90e2;
+      color: white;
+    }
+    .info-link {
+      color: #4a90e2;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.3s ease;
+    }
+    .info-link:hover {
+      color: #357abd;
+    }
+    .cloud-forecast {
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      background-color: #3d3d3d;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .cloud-forecast > div:first-child {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+    .cloud-forecast > div {
+      text-align: center;
+    }
+    .add-to-home {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #4a90e2;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 25px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      cursor: pointer;
+      z-index: 1000;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      margin: 1rem auto;
+      width: fit-content;
+    }
+    .add-to-home:hover {
+      background-color: #357abd;
+      transform: translateX(-50%) translateY(-2px);
+    }
+    @media (display-mode: standalone) {
+      .add-to-home {
+        display: none !important;
+      }
+    }
+    @media (min-width: 768px) {
+      .add-to-home {
+        position: static;
+        transform: none;
+        margin: 1rem auto;
+      }
+      .add-to-home:hover {
+        transform: translateY(-2px);
+      }
+    }
+    .constellation-guide {
+      margin: 1rem 0;
+      padding: 1rem;
+      background-color: #2d2d2d;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .constellation-heading {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #4a90e2;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+    .constellation-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .constellation-item {
+      background-color: #3d3d3d;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .constellation-name {
+      font-weight: bold;
+      color: #4a90e2;
+      margin-bottom: 0.5rem;
+    }
+    .constellation-details {
+      font-size: 0.9rem;
+      color: #8ab4e6;
+    }
+    .night-sky-info {
+      margin: 1rem 0;
+      padding: 1rem;
+      background-color: #2d2d2d;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .night-sky-heading {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #4a90e2;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+    .night-sky-details {
+      background-color: #3d3d3d;
+      padding: 1rem;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .night-sky-link {
+      display: inline-block;
+      color: #4a90e2;
+      text-decoration: none;
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+      margin-top: 0.5rem;
+      border-radius: 4px;
       transition: all 0.3s ease;
     }
-
-    .favorite-item:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    .favorite-item .remove-btn {
-      color: #ff4444;
-      font-size: 1.2em;
-      cursor: pointer;
-      padding: 0 5px;
-    }
-
-    .favorite-item .edit-btn {
-      color: #44ff44;
-      font-size: 1.2em;
-      cursor: pointer;
-      padding: 0 5px;
-    }
-
-    .save-favorite-btn {
-      background: rgba(255, 255, 255, 0.1);
-      color: #fff;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 20px;
-      cursor: pointer;
-      margin-top: 10px;
-      transition: all 0.3s ease;
-    }
-
-    .save-favorite-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    .save-favorite-btn.saved {
-      background: rgba(68, 255, 68, 0.2);
-      color: #44ff44;
+    .night-sky-link:hover {
+      background-color: #4a90e2;
+      color: white;
     }
   </style>
-  <link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
-<script
-  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js?v=1"></script>
-
 </head>
 <body>
   <div class="container">
+    <img src="images/banner.jpg" alt="Stargazing Banner" class="banner">
     <h1>Should I Go Stargazing?</h1>
+    <div class="subtitle"><a href="https://research.monash.edu/en/persons/jo-blannin" target="_blank">Dr Jo Blannin</a></div>
     
+    <!-- Add to Home Screen Button -->
+    <button id="addToHomeBtn" class="add-to-home">📱 Add to Home Screen</button>
+
     <!-- Favorites Section -->
     <div class="favorites-section">
-      <div class="favorites-title">⭐ Favorite Locations</div>
+      <div class="favorites-title">⭐ Favourite Locations</div>
       <div class="favorites-list" id="favoritesList">
         <!-- Favorites will be added here dynamically -->
       </div>
@@ -147,21 +501,29 @@
     <div class="search-container">
       <p>Enter a city or use your current location:</p>
       <div class="autocomplete-container">
-        <input type="text" id="cityInput" placeholder="e.g. San Francisco" autocomplete="off" />
-        <div id="suggestions" class="autocomplete-suggestions" style="display: none;"></div>
+        <input
+          type="text"
+          id="cityInput"
+          placeholder="Enter city name"
+          autocomplete="off"
+        />
+        <div id="suggestions" class="suggestions"></div>
       </div>
-      <br />
-      <button id="checkCityBtn">Check by City</button>
+      <button id="searchBtn">Check by City</button>
       <button id="gpsBtn">Use My Location</button>
       <div id="result"></div>
-      <button class="save-favorite-btn" id="saveFavoriteBtn">Save as Favorite</button>
     </div>
 
     <div id="map" style="height: 300px; margin-top: 2rem; border-radius: 10px;"></div>
   </div>
 
   <script>
-    const apiKey = "c85c9a660f960eb3934c56c59b8127bc"; // Replace with your real key
+    // Initialize Astronomy Engine
+    const Astronomy = window.Astronomy;
+    
+    // API Key for OpenWeatherMap
+    const apiKey = "366c8899f3ccb2ad3577c0d4cde8d4be";
+
     const result = document.getElementById("result");
     const cityInput = document.getElementById("cityInput");
     const suggestionsDiv = document.getElementById("suggestions");
@@ -200,14 +562,36 @@
 
     async function fetchCitySuggestions(query) {
       try {
+        // Split the input into parts
+        const parts = query.split(',').map(part => part.trim());
+        let searchQuery = parts[0];
+        let state = parts[1] || '';
+        let country = parts[2] || '';
+        
+        // Construct a more specific search query
+        let searchString = searchQuery;
+        if (state) searchString += `, ${state}`;
+        if (country) searchString += `, ${country}`;
+        
         const res = await fetch(
-          `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=5&appid=${apiKey}`
+          `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchString)}&limit=5&appid=${apiKey}`
         );
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(`API error: ${errorData.message || 'Unknown error'}`);
+        }
+        
         const data = await res.json();
         
         if (data.length > 0) {
           suggestionsDiv.innerHTML = data
-            .map(city => `<div class="suggestion-item">${city.name}, ${city.country}</div>`)
+            .map(city => {
+              let displayName = city.name;
+              if (city.state) displayName += `, ${city.state}`;
+              if (city.country) displayName += `, ${city.country}`;
+              return `<div class="suggestion-item">${displayName}</div>`;
+            })
             .join("");
           suggestionsDiv.style.display = "block";
         } else {
@@ -216,58 +600,135 @@
       } catch (err) {
         console.error("Error fetching suggestions:", err);
         suggestionsDiv.style.display = "none";
+        result.innerHTML = `Error: ${err.message}`;
       }
     }
 
-    async function checkConditions(city = null, lat = null, lon = null) {
-      result.innerText = "🔄 Checking conditions...";
-
+    async function checkConditions(city, lat, lon) {
       try {
-        // Step 1: Get coordinates if using city
-        if (city) {
+        const result = document.getElementById('result');
+        result.innerHTML = 'Loading...';
+
+        // First get the coordinates if we only have a city name
+        if (city && !lat && !lon) {
+          console.log('Fetching coordinates for:', city);
+          
+          // Split the input into parts (city, state, country)
+          const parts = city.split(',').map(part => part.trim());
+          let searchQuery = parts[0];
+          let state = parts[1] || '';
+          let country = parts[2] || '';
+          
+          // Construct a more specific search query
+          let searchString = searchQuery;
+          if (state) searchString += `, ${state}`;
+          if (country) searchString += `, ${country}`;
+          
           const geoRes = await fetch(
-            `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${apiKey}`
+            `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchString)}&limit=5&appid=${apiKey}`
           );
-          const geoData = await geoRes.json();
           
           if (!geoRes.ok) {
-            throw new Error(`Weather API error: ${geoData.message || 'Unknown error'}`);
+            const errorData = await geoRes.json();
+            throw new Error(`Geocoding API error: ${errorData.message || 'Unknown error'}`);
           }
+          
+          const geoData = await geoRes.json();
           
           if (!geoData.length) {
-            throw new Error(`City not found. Please try a more specific location (e.g., "Sydney, Australia" or "New York, US")`);
+            throw new Error('Location not found. Please try a more specific location.');
           }
           
-          lat = geoData[0].lat;
-          lon = geoData[0].lon;
-          city = `${geoData[0].name}, ${geoData[0].country}`; // Use the standardized city name
+          // If we have multiple results, try to find the best match
+          let bestMatch = geoData[0];
+          if (geoData.length > 1) {
+            // If state was provided, try to match it
+            if (state) {
+              const stateMatch = geoData.find(loc => 
+                loc.state && loc.state.toLowerCase() === state.toLowerCase()
+              );
+              if (stateMatch) bestMatch = stateMatch;
+            }
+            
+            // If country was provided, try to match it
+            if (country) {
+              const countryMatch = geoData.find(loc => 
+                loc.country && loc.country.toLowerCase() === country.toLowerCase()
+              );
+              if (countryMatch) bestMatch = countryMatch;
+            }
+          }
+          
+          lat = bestMatch.lat;
+          lon = bestMatch.lon;
+          
+          // Keep the original city name from the search input
+          const originalCityName = document.getElementById('cityInput').value.trim();
+          if (originalCityName) {
+            city = originalCityName;
+          } else {
+            // Only use reverse geocoding if we don't have a city name from the search input
+            const reverseGeoRes = await fetch(
+              `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`
+            );
+            const reverseGeoData = await reverseGeoRes.json();
+            
+            if (reverseGeoData.length > 0) {
+              city = reverseGeoData[0].local_names?.en || reverseGeoData[0].name;
+              if (reverseGeoData[0].state) {
+                city += `, ${reverseGeoData[0].state}`;
+              }
+              if (reverseGeoData[0].country) {
+                city += `, ${reverseGeoData[0].country}`;
+              }
+            } else {
+              city = `${bestMatch.name}, ${bestMatch.state || ''}, ${bestMatch.country}`.replace(/,\s*,/g, ',').replace(/,\s*$/, '');
+            }
+          }
+          
+          console.log('Found coordinates:', lat, lon);
         }
 
-        updateMap(lat, lon);
-        
-        // Step 2: Get One Call Data (weather + clouds)
+        // Then get the weather data
+        console.log('Fetching weather data for:', lat, lon);
         const weatherRes = await fetch(
-          `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,daily,alerts&units=metric&appid=${apiKey}`
+          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}`
         );
         
         if (!weatherRes.ok) {
-          const weatherData = await weatherRes.json();
-          throw new Error(`Weather API error: ${weatherData.message || 'Unknown error'}`);
+          const errorData = await weatherRes.json();
+          throw new Error(`Weather API error: ${errorData.message || 'Unknown error'}`);
         }
-        
+
         const weatherData = await weatherRes.json();
+        console.log('Weather data received:', weatherData);
+
+        // Get forecast data
+        const forecastRes = await fetch(
+          `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}`
+        );
+
+        if (!forecastRes.ok) {
+          const errorData = await forecastRes.json();
+          throw new Error(`Forecast API error: ${errorData.message || 'Unknown error'}`);
+        }
+
+        const forecastData = await forecastRes.json();
+        console.log('Forecast data received:', forecastData);
+
         const now = new Date().getTime() / 1000;
-        const sunrise = weatherData.current.sunrise;
-        const sunset = weatherData.current.sunset;
+        const sunrise = weatherData.sys.sunrise;
+        const sunset = weatherData.sys.sunset;
+        const clouds = weatherData.clouds.all;
 
         // Get current time at location using the timezone offset from the API
-        const timezoneOffset = weatherData.timezone_offset;
+        const timezoneOffset = weatherData.timezone;
         const localTime = new Date((now + timezoneOffset) * 1000);
         const formattedTime = localTime.toLocaleTimeString([], { 
             hour: '2-digit', 
             minute: '2-digit',
             hour12: true,
-            timeZone: 'UTC' // This ensures we're working with UTC time
+            timeZone: 'UTC'
         });
 
         // Format time function
@@ -316,82 +777,581 @@
         
         // Find the next nighttime period
         let nextNightStart, nextNightEnd;
-        if (now < sunrise) {
-            // Currently before sunrise (night)
-            nextNightStart = now;
-            nextNightEnd = sunrise;
-        } else if (now > sunset) {
-            // Currently after sunset (night)
-            nextNightStart = now;
-            nextNightEnd = sunrise + 86400; // Next day's sunrise
+        if (now < astronomicalDuskUnix) {
+            nextNightStart = astronomicalDuskUnix;
+            nextNightEnd = astronomicalDawnUnix;
         } else {
-            // Currently daytime
-            nextNightStart = sunset;
-            nextNightEnd = sunrise + 86400; // Next day's sunrise
+            nextNightStart = astronomicalDawnUnix;
+            nextNightEnd = new Date(astronomicalDawn.getTime() + 24*60*60*1000).getTime() / 1000;
         }
 
-        // Find the relevant hourly forecasts for the next nighttime period
-        const relevantForecasts = weatherData.hourly.filter(hour => {
-            const hourTime = hour.dt;
-            return hourTime >= nextNightStart && hourTime <= nextNightEnd;
-        });
-
-        if (relevantForecasts.length === 0) {
-            result.innerText = "⚠️ No nighttime forecast data available for the next period.";
-            return;
-        }
-
-        // Calculate average cloud cover for the nighttime period
-        const avgClouds = relevantForecasts.reduce((sum, hour) => sum + hour.clouds, 0) / relevantForecasts.length;
-
-        // Step 3: Get Air Quality
-        const airRes = await fetch(
-          `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`
+        // Filter hourly forecasts for the next nighttime period
+        const hourlyForecasts = forecastData.list.filter(
+          (forecast) => forecast.dt >= nextNightStart && forecast.dt <= nextNightEnd
         );
-        
-        if (!airRes.ok) {
-          const airData = await airRes.json();
-          throw new Error(`Air Quality API error: ${airData.message || 'Unknown error'}`);
+
+        // Calculate average cloud cover
+        const avgClouds =
+          hourlyForecasts.reduce((sum, forecast) => sum + forecast.clouds.all, 0) /
+          hourlyForecasts.length;
+
+        // Get moon phase with more details
+        function getMoonPhase() {
+          const phases = [
+            { name: "New Moon", emoji: "🌑", description: "Moon is not visible" },
+            { name: "Waxing Crescent", emoji: "🌒", description: "First visible sliver" },
+            { name: "First Quarter", emoji: "🌓", description: "Half moon, right side lit" },
+            { name: "Waxing Gibbous", emoji: "🌔", description: "More than half lit" },
+            { name: "Full Moon", emoji: "🌕", description: "Fully illuminated" },
+            { name: "Waning Gibbous", emoji: "🌖", description: "More than half lit" },
+            { name: "Last Quarter", emoji: "🌗", description: "Half moon, left side lit" },
+            { name: "Waning Crescent", emoji: "🌘", description: "Last visible sliver" },
+          ];
+          const now = new Date();
+          const newMoon = new Date("2024-04-08T18:21:00Z"); // known new moon
+          const diffDays = (now - newMoon) / (1000 * 60 * 60 * 24);
+          const phaseIndex = Math.floor(((diffDays % 29.53) / 29.53) * 8) % 8;
+          
+          // Calculate illumination percentage
+          const illumination = Math.abs(Math.sin((diffDays % 29.53) * Math.PI / 14.765));
+          const illuminationPercent = Math.round(illumination * 100);
+          
+          return { 
+            phase: phases[phaseIndex].name, 
+            emoji: phases[phaseIndex].emoji,
+            description: phases[phaseIndex].description,
+            illumination: illuminationPercent
+          };
         }
+
+        // Format the output with HTML
+        let output = `<div class="location-header">
+          <span>📍 ${city}</span>
+          <button class="save-favorite-btn" id="saveFavoriteBtn">Save as Favourite</button>
+        </div>`;
         
-        const airData = await airRes.json();
-        const aqi = airData.list[0].main.aqi;
-        const aqiRating = ["❓", "Good 🌿", "Fair 🌤️", "Moderate 😐", "Poor 😷", "Very Poor 💀"][aqi];
+        // Add all current conditions in one block
+        output += `<div class="current-conditions">
+          <div class="current-status-heading">Current Status</div>
+          <div class="current-time">🕒 ${formattedTime}</div>
+          <div class="temp-feels">
+            <div class="current-temp">🌡️ Temp: ${Math.round(weatherData.main.temp - 273.15)}°C</div>
+            <div class="current-feels">Feels like: ${Math.round(weatherData.main.feels_like - 273.15)}°C</div>
+          </div>
+          <div class="humidity-wind">
+            <div class="current-humidity">💧 Humidity: ${weatherData.main.humidity}%</div>
+            <div class="current-wind">💨 Wind Speed: ${Math.round(weatherData.wind.speed * 3.6)} km/h</div>
+          </div>
+        </div>`;
 
-        // Step 4: Calculate Moon Phase (basic local calc)
-        const moon = getMoonPhase();
+        // Add stargazing conditions section
+        output += `<div class="stargazing-conditions">
+          <div class="stargazing-heading">Stargazing Conditions Tonight</div>`;
 
-        let output = `📍 Location: ${city || "Your Location"}\n`;
-        output += `🕒 Current Local Time: ${formattedTime}\n\n`;
-        output += `🌅 Sunrise: ${formatTime(sunrise)}\n`;
-        output += `🌇 Sunset: ${formatTime(sunset)}\n`;
-        output += `🌌 Astronomical Twilight (True Darkness):\n`;
-        output += `   Starts: ${formatAstroTime(astronomicalDusk)}\n`;
-        output += `   Ends: ${formatAstroTime(astronomicalDawn)}\n\n`;
-        output += `🌙 Moon Phase: ${moon.phase} (${moon.emoji})\n`;
-        output += `☁️ Average cloud cover during next nighttime: ${Math.round(avgClouds)}%\n`;
-        output += `😮‍💨 Air Quality Index: ${aqi} - ${aqiRating}\n\n`;
-
-        output += `🌥️ Nighttime Cloud Forecast:\n`;
-        relevantForecasts.forEach(hour => {
-            const time = new Date(hour.dt * 1000);
-            const hourStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            output += `${hourStr} → ${hour.clouds}% clouds\n`;
-        });
-
-        // Stargazing score (basic)
-        if (avgClouds < 30 && aqi < 3) {
-            output += `\n✅ Yes! Excellent stargazing conditions expected 🌌`;
-        } else if (avgClouds < 50 && aqi < 4) {
-            output += `\n🤔 Maybe. Mixed conditions expected, bring binoculars.`;
+        // Add recommendation first
+        output += `<div class="recommendation">`;
+        if (avgClouds < 30) {
+          output += `✨ Great conditions for stargazing! Clear skies expected.`;
+        } else if (avgClouds < 60) {
+          output += `🌤️ Moderate conditions. Some clouds may affect visibility.`;
         } else {
-            output += `\n❌ Not ideal for stargazing — too cloudy or poor air expected.`;
+          output += `☁️ Poor conditions for stargazing. Heavy cloud cover expected.`;
+        }
+        output += `</div>`;
+
+        // Add cloud info after recommendation
+        output += `<div class="cloud-info">☁️ Average cloud cover tonight: ${Math.round(avgClouds)}%</div>`;
+        
+        // Add cloud forecast details
+        output += `<div class="cloud-forecast">
+          <div>🌥️ Nighttime Cloud Forecast:</div>`;
+        
+        hourlyForecasts.forEach(forecast => {
+          const time = new Date((forecast.dt + timezoneOffset) * 1000).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+            timeZone: 'UTC'
+          });
+          output += `<div>   ${time}: ${forecast.clouds.all}% clouds</div>`;
+        });
+        output += `</div></div>`;
+
+        // Add astronomical information in a 2x2 table format
+        output += `<div class="astronomical-info">
+          <div class="astro-grid">
+            <div class="astro-section">
+              <div class="astro-heading">Sunrise/Sunset</div>
+              <div class="astro-times">
+                <div>Sunrise: ${formatTime(sunrise)}</div>
+                <div>Sunset: ${formatTime(sunset)}</div>
+              </div>
+            </div>
+            <div class="astro-section">
+              <div class="astro-heading">Astronomical Twilight</div>
+              <div class="astro-times">
+                <div>Starts: ${formatAstroTime(astronomicalDusk)}</div>
+                <div>Ends: ${formatAstroTime(astronomicalDawn)}</div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+
+        // Add moon information
+        const moon = getMoonPhase();
+        output += `<div class="moon-info">
+          <div class="moon-heading">Moon Information</div>
+          <div class="moon-details">
+            <div class="moon-phase">${moon.emoji} ${moon.phase}</div>
+            <div class="moon-description">${moon.description}</div>
+            <div class="moon-links">
+              <a href="https://spaceplace.nasa.gov/moon-phases/en/#:~:text=The%20Sun's%20light%20comes%20from,from%20Earth%20during%20each%20phase." target="_blank" class="moon-link">🌓 Moon Phases & Illumination</a>
+              <a href="https://moon.nasa.gov/observe-the-moon-night/resources/moon-map/" target="_blank" class="moon-link">🌕 NASA Moon Map</a>
+            </div>
+          </div>
+        </div>`;
+
+        // Update celestial objects list with Southern Hemisphere objects
+        const celestialObjects = [
+          // Bright Stars
+          { name: "Sirius", type: "Star", ra: 6.75, dec: -16.7, magnitude: -1.46, description: "Brightest star in the night sky" },
+          { name: "Canopus", type: "Star", ra: 6.4, dec: -52.7, magnitude: -0.74, description: "Second brightest star" },
+          { name: "Alpha Centauri", type: "Star", ra: 14.66, dec: -60.8, magnitude: -0.27, description: "Closest star system to Earth" },
+          { name: "Arcturus", type: "Star", ra: 14.26, dec: 19.2, magnitude: -0.05, description: "Bright orange giant star" },
+          { name: "Vega", type: "Star", ra: 18.62, dec: 38.8, magnitude: 0.03, description: "Bright blue-white star" },
+          { name: "Capella", type: "Star", ra: 5.28, dec: 46.0, magnitude: 0.08, description: "Bright yellow binary star" },
+          { name: "Rigel", type: "Star", ra: 5.24, dec: -8.2, magnitude: 0.13, description: "Blue supergiant in Orion" },
+          { name: "Procyon", type: "Star", ra: 7.66, dec: 5.2, magnitude: 0.34, description: "Bright binary star" },
+          { name: "Achernar", type: "Star", ra: 1.63, dec: -57.2, magnitude: 0.46, description: "Brightest star in Eridanus" },
+          { name: "Betelgeuse", type: "Star", ra: 5.92, dec: 7.4, magnitude: 0.5, description: "Red supergiant in Orion" },
+          { name: "Hadar", type: "Star", ra: 14.07, dec: -60.4, magnitude: 0.61, description: "Bright blue giant in Centaurus" },
+          { name: "Acrux", type: "Star", ra: 12.44, dec: -63.1, magnitude: 0.77, description: "Brightest star in Crux" },
+          
+          // Deep Sky Objects
+          { name: "Omega Centauri", type: "Globular Cluster", ra: 13.67, dec: -47.5, magnitude: 3.7, description: "Largest globular cluster in Milky Way" },
+          { name: "47 Tucanae", type: "Globular Cluster", ra: 0.52, dec: -72.1, magnitude: 4.1, description: "Second brightest globular cluster" },
+          { name: "Jewel Box", type: "Open Cluster", ra: 12.53, dec: -60.8, magnitude: 4.2, description: "Colorful star cluster in Crux" },
+          { name: "Tarantula Nebula", type: "Nebula", ra: 5.53, dec: -69.1, magnitude: 5.0, description: "Largest star-forming region in Local Group" },
+          { name: "Carina Nebula", type: "Nebula", ra: 10.77, dec: -59.9, magnitude: 1.0, description: "Large star-forming region" }
+        ];
+
+        // Calculate object visibility and rise/set times
+        function getObjectVisibility(object, date, lat, lon) {
+          try {
+            console.log(`\nCalculating ${object.name} visibility:`);
+            console.log(`Location: lat ${lat}, lon ${lon}`);
+            console.log(`Current time: ${date.toLocaleString()}`);
+            
+            // Create an observer at the given location
+            const observer = Astronomy.Observer(lat, lon, 0);
+            
+            // Create a body for the object's position
+            const body = {
+              type: 'star',
+              ra: object.ra * 15, // Convert hours to degrees
+              dec: object.dec,
+              mag: object.magnitude
+            };
+            
+            // Calculate rise and set times
+            const riseSet = Astronomy.RiseSet(body, date, observer);
+            
+            // Convert times to local time
+            const riseTime = new Date(riseSet.rise.getTime() + timezoneOffset * 1000);
+            const setTime = new Date(riseSet.set.getTime() + timezoneOffset * 1000);
+            
+            // Format times
+            const formatTime = (date) => {
+              return date.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true,
+                timeZone: 'UTC'
+              });
+            };
+
+            // Log all relevant times
+            console.log(`Rise time: ${formatTime(riseTime)}`);
+            console.log(`Set time: ${formatTime(setTime)}`);
+            console.log(`Astronomical dusk: ${formatTime(astronomicalDusk)}`);
+            console.log(`Astronomical dawn: ${formatTime(astronomicalDawn)}`);
+
+            // Calculate visibility duration in minutes
+            let visibilityDuration = 0;
+            let isVisible = false;
+
+            // Check if object is circumpolar (never sets)
+            const isCircumpolar = (riseTime.getTime() === setTime.getTime());
+            if (isCircumpolar) {
+              console.log(`${object.name} is circumpolar - always visible`);
+              visibilityDuration = 24 * 60; // 24 hours in minutes
+              isVisible = true;
+              return {
+                riseTime: "Always up",
+                setTime: "Never sets",
+                isVisible: true,
+                duration: visibilityDuration
+              };
+            }
+
+            // An object is visible if ANY of these conditions are true:
+            // 1. It rises during the night (between dusk and dawn)
+            // 2. It's already up at dusk
+            // 3. It rises before dawn
+            isVisible = (
+              (riseTime >= astronomicalDusk && riseTime <= astronomicalDawn) || // Rises during night
+              (riseTime <= astronomicalDusk) ||  // Already up at dusk
+              (riseTime <= astronomicalDawn)     // Rises before dawn
+            );
+
+            // Calculate actual visibility duration during night
+            if (isVisible) {
+              const nightStart = Math.max(riseTime.getTime(), astronomicalDusk.getTime());
+              const nightEnd = Math.min(setTime.getTime(), astronomicalDawn.getTime());
+              visibilityDuration = (nightEnd - nightStart) / (1000 * 60); // Convert to minutes
+            }
+
+            console.log(`Visibility duration: ${visibilityDuration.toFixed(0)} minutes`);
+            console.log(`Visibility result: ${isVisible ? 'Visible' : 'Not visible'}`);
+            
+            return {
+              riseTime: formatTime(riseTime),
+              setTime: formatTime(setTime),
+              isVisible: isVisible,
+              duration: visibilityDuration
+            };
+          } catch (error) {
+            console.error(`Error calculating ${object.name} visibility:`, error);
+            // If there's an error, assume the object is visible
+            return {
+              riseTime: "N/A",
+              setTime: "N/A",
+              isVisible: true,
+              duration: 0
+            };
+          }
         }
 
-        result.innerText = output;
-      } catch (err) {
-        console.error("Error:", err);
-        result.innerText = `⚠️ ${err.message}`;
+        // Add celestial objects section
+        output += `<div class="constellation-guide">
+          <div class="constellation-heading">Top Celestial Objects for Tonight</div>
+          <div class="constellation-list">`;
+        
+        // Filter, sort by duration, and take top 6
+        const visibleObjects = celestialObjects
+          .map(object => {
+            const visibility = getObjectVisibility(object, localTime, lat, lon);
+            return { ...object, ...visibility };
+          })
+          .filter(object => object.isVisible)
+          .sort((a, b) => b.duration - a.duration);
+
+        // Separate stars and deep sky objects
+        const visibleStars = visibleObjects.filter(obj => obj.type === "Star");
+        const visibleDeepSky = visibleObjects.filter(obj => obj.type !== "Star");
+
+        // Take top 3 from each category
+        const topStars = visibleStars.slice(0, 3);
+        const topDeepSky = visibleDeepSky.slice(0, 3);
+
+        // Combine and sort by duration
+        const finalObjects = [...topStars, ...topDeepSky].sort((a, b) => b.duration - a.duration);
+        
+        console.log(`\nTotal objects checked: ${celestialObjects.length}`);
+        console.log(`Visible stars found: ${visibleStars.length}`);
+        console.log(`Visible deep sky objects found: ${visibleDeepSky.length}`);
+        
+        if (finalObjects.length === 0) {
+          output += `
+            <div class="constellation-item">
+              <div class="constellation-name">No objects visible tonight</div>
+              <div class="constellation-details">
+                Check back tomorrow for visible objects
+              </div>
+            </div>`;
+        } else {
+          finalObjects.forEach(object => {
+            output += `
+              <div class="constellation-item">
+                <div class="constellation-name">${object.name} (${object.type})</div>
+                <div class="constellation-details">
+                  ${object.description}<br>
+                  Magnitude: ${object.magnitude}
+                </div>
+              </div>`;
+          });
+        }
+        
+        output += `</div></div>`;
+
+        // Add night sky information section
+        output += `<div class="night-sky-info">
+          <div class="night-sky-heading">Night Sky Tonight</div>
+          <div class="night-sky-details">
+            <p>For detailed information about planets, constellations, and other celestial objects visible tonight, visit:</p>
+            <a href="https://www.timeanddate.com/astronomy/night/" target="_blank" class="night-sky-link">🌌 View Detailed Night Sky Information</a>
+          </div>
+        </div>`;
+
+        result.innerHTML = output;
+
+        // Update map
+        if (map) {
+          map.setView([lat, lon], 10);
+          if (marker) {
+            marker.setLatLng([lat, lon]);
+            marker.setPopupContent(`📍 ${city}<br>Lat: ${lat.toFixed(4)}°, Lon: ${lon.toFixed(4)}°`).openPopup();
+          } else {
+            marker = L.marker([lat, lon])
+              .addTo(map)
+              .bindPopup(`📍 ${city}<br>Lat: ${lat.toFixed(4)}°, Lon: ${lon.toFixed(4)}°`)
+              .openPopup();
+          }
+        } else {
+          map = L.map("map").setView([lat, lon], 10);
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "© OpenStreetMap contributors",
+          }).addTo(map);
+          marker = L.marker([lat, lon])
+            .addTo(map)
+            .bindPopup(`📍 ${city}<br>Lat: ${lat.toFixed(4)}°, Lon: ${lon.toFixed(4)}°`)
+            .openPopup();
+        }
+
+        // Update current location for favourites
+        currentLocation = { name: city, lat, lon };
+        updateSaveButton();
+
+        // Update CSS styles
+        const style = document.createElement('style');
+        style.textContent = `
+          .current-conditions, .stargazing-conditions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          }
+          .current-status-heading, .stargazing-heading {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4a90e2;
+            margin-bottom: 0.5rem;
+            text-align: center;
+          }
+          .current-time {
+            font-size: 1.1rem;
+            padding: 0.5rem;
+            text-align: center;
+            background-color: #3d3d3d;
+            border-radius: 4px;
+          }
+          .temp-feels, .humidity-wind {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+          }
+          .current-temp, .current-feels, .current-humidity, .current-wind {
+            font-size: 1.1rem;
+            padding: 0.5rem;
+            text-align: center;
+            background-color: #3d3d3d;
+            border-radius: 4px;
+          }
+          .cloud-info {
+            font-size: 1.1rem;
+            padding: 0.5rem;
+            text-align: center;
+            background-color: #3d3d3d;
+            border-radius: 4px;
+          }
+          .cloud-forecast {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background-color: #3d3d3d;
+            border-radius: 4px;
+            text-align: center;
+          }
+          .cloud-forecast > div:first-child {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+          }
+          .cloud-forecast > div {
+            text-align: center;
+          }
+          .recommendation {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            text-align: center;
+            background-color: #3d3d3d;
+            border-radius: 4px;
+            font-weight: bold;
+          }
+          .astronomical-info {
+            margin: 1rem 0;
+            padding: 1rem;
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          }
+          .astro-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+          }
+          .astro-section {
+            background-color: #3d3d3d;
+            border-radius: 4px;
+            padding: 0.5rem;
+          }
+          .astro-heading {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #4a90e2;
+            margin-bottom: 0.5rem;
+            text-align: center;
+          }
+          .astro-times {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+          }
+          .astro-times div {
+            text-align: center;
+            font-size: 1rem;
+          }
+          .moon-info {
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          }
+          .moon-heading {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #4a90e2;
+            margin-bottom: 0.3rem;
+            text-align: center;
+          }
+          .moon-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            background-color: #3d3d3d;
+            border-radius: 4px;
+            padding: 0.5rem;
+          }
+          .moon-phase {
+            font-size: 1rem;
+            text-align: center;
+            font-weight: bold;
+          }
+          .moon-description {
+            font-size: 0.9rem;
+            text-align: center;
+            color: #8ab4e6;
+          }
+          .moon-links {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.3rem;
+            padding-top: 0.3rem;
+            border-top: 1px solid #4a90e2;
+          }
+          .moon-link {
+            color: #4a90e2;
+            text-decoration: none;
+            font-size: 0.9rem;
+            padding: 0.3rem 0.5rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            text-align: center;
+            white-space: nowrap;
+          }
+          .moon-link:hover {
+            background-color: #4a90e2;
+            color: white;
+          }
+          .constellation-guide {
+            margin: 1rem 0;
+            padding: 1rem;
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          }
+          .constellation-heading {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4a90e2;
+            margin-bottom: 0.5rem;
+            text-align: center;
+          }
+          .constellation-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+          }
+          .constellation-item {
+            background-color: #3d3d3d;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+          }
+          .constellation-name {
+            font-weight: bold;
+            color: #4a90e2;
+            margin-bottom: 0.5rem;
+          }
+          .constellation-details {
+            font-size: 0.9rem;
+            color: #8ab4e6;
+          }
+          .night-sky-info {
+            margin: 1rem 0;
+            padding: 1rem;
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          }
+          .night-sky-heading {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #4a90e2;
+            margin-bottom: 0.5rem;
+            text-align: center;
+          }
+          .night-sky-details {
+            background-color: #3d3d3d;
+            padding: 1rem;
+            border-radius: 4px;
+            text-align: center;
+          }
+          .night-sky-link {
+            display: inline-block;
+            color: #4a90e2;
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            margin-top: 0.5rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+          }
+          .night-sky-link:hover {
+            background-color: #4a90e2;
+            color: white;
+          }
+        `;
+        document.head.appendChild(style);
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('result').innerHTML = `Error: ${error.message}`;
       }
     }
 
@@ -403,8 +1363,39 @@
 
       result.innerText = "📡 Getting location...";
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          checkConditions(null, pos.coords.latitude, pos.coords.longitude);
+        async (pos) => {
+          try {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            
+            // Get the specific location name from reverse geocoding
+            const geoRes = await fetch(
+              `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`
+            );
+            const geoData = await geoRes.json();
+            
+            let cityName = "Your Location";
+            if (geoData.length > 0) {
+              // Use the most specific name available (local name or name)
+              cityName = geoData[0].local_names?.en || geoData[0].name;
+              if (geoData[0].state) {
+                cityName += `, ${geoData[0].state}`;
+              }
+              if (geoData[0].country) {
+                cityName += `, ${geoData[0].country}`;
+              }
+            }
+            
+            // Update current location for favourites
+            currentLocation = { name: cityName, lat, lon };
+            updateSaveButton();
+            
+            // Check conditions
+            await checkConditions(cityName, lat, lon);
+          } catch (error) {
+            console.error('Error:', error);
+            result.innerText = "Error getting location data. Please try again.";
+          }
         },
         (err) => {
           result.innerText = "⚠️ Could not get location: " + err.message;
@@ -421,116 +1412,153 @@
       checkConditions(city);
     }
 
-    // Simple Moon Phase Calc (based on days since known new moon)
-    function getMoonPhase() {
-      const phases = [
-        { name: "New Moon", emoji: "🌑" },
-        { name: "Waxing Crescent", emoji: "🌒" },
-        { name: "First Quarter", emoji: "🌓" },
-        { name: "Waxing Gibbous", emoji: "🌔" },
-        { name: "Full Moon", emoji: "🌕" },
-        { name: "Waning Gibbous", emoji: "🌖" },
-        { name: "Last Quarter", emoji: "🌗" },
-        { name: "Waning Crescent", emoji: "🌘" },
-      ];
-      const now = new Date();
-      const newMoon = new Date("2024-04-08T18:21:00Z"); // known new moon
-      const diffDays = (now - newMoon) / (1000 * 60 * 60 * 24);
-      const phaseIndex = Math.floor(((diffDays % 29.53) / 29.53) * 8) % 8;
-      return { phase: phases[phaseIndex].name, emoji: phases[phaseIndex].emoji };
+    // Search location function
+    async function searchLocation(city) {
+      try {
+        const result = document.getElementById('result');
+        result.innerHTML = 'Loading...';
+
+        // Split the input into parts (city, state, country)
+        const parts = city.split(',').map(part => part.trim());
+        let searchQuery = parts[0];
+        let state = parts[1] || '';
+        let country = parts[2] || '';
+        
+        // Construct a more specific search query
+        let searchString = searchQuery;
+        if (state) searchString += `, ${state}`;
+        if (country) searchString += `, ${country}`;
+
+        // First get the coordinates for the city
+        const geoRes = await fetch(
+          `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchString)}&limit=5&appid=${apiKey}`
+        );
+        const geoData = await geoRes.json();
+        
+        if (!geoData.length) {
+          throw new Error('Location not found. Please try a more specific location.');
+        }
+        
+        // If we have multiple results, try to find the best match
+        let bestMatch = geoData[0];
+        if (geoData.length > 1) {
+          // If state was provided, try to match it
+          if (state) {
+            const stateMatch = geoData.find(loc => 
+              loc.state && loc.state.toLowerCase() === state.toLowerCase()
+            );
+            if (stateMatch) bestMatch = stateMatch;
+          }
+          
+          // If country was provided, try to match it
+          if (country) {
+            const countryMatch = geoData.find(loc => 
+              loc.country && loc.country.toLowerCase() === country.toLowerCase()
+            );
+            if (countryMatch) bestMatch = countryMatch;
+          }
+        }
+        
+        const lat = bestMatch.lat;
+        const lon = bestMatch.lon;
+
+        // Keep the original search input as the city name
+        const cityName = city;
+
+        // Update current location for favourites
+        currentLocation = { name: cityName, lat, lon };
+        updateSaveButton();
+
+        // Call checkConditions with the correct parameters
+        await checkConditions(cityName, lat, lon);
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('result').innerHTML = `Error: ${error.message}`;
+      }
     }
 
     // Bind buttons
-    document.getElementById("checkCityBtn").addEventListener("click", checkByCity);
+    document.getElementById("searchBtn").addEventListener("click", function() {
+      const city = document.getElementById("cityInput").value.trim();
+      if (!city) {
+        result.innerText = "🔍 Please enter a city name.";
+        return;
+      }
+      searchLocation(city);
+    });
     document.getElementById("gpsBtn").addEventListener("click", useMyLocation);
 
     // Map setup
     let map;
+    let marker = null;
     function updateMap(lat, lon) {
       if (!map) {
         map = L.map("map").setView([lat, lon], 8);
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: "© OpenStreetMap contributors",
         }).addTo(map);
-        L.marker([lat, lon]).addTo(map).bindPopup("Observation Location").openPopup();
+        marker = L.marker([lat, lon]).addTo(map).bindPopup("Observation Location").openPopup();
       } else {
         map.setView([lat, lon], 8);
-        map.eachLayer((layer) => {
-          if (layer instanceof L.Marker) {
-            map.removeLayer(layer);
-          }
-        });
-        L.marker([lat, lon]).addTo(map).bindPopup("Observation Location").openPopup();
+        if (marker) {
+          marker.setLatLng([lat, lon]);
+        } else {
+          marker = L.marker([lat, lon]).addTo(map).bindPopup("Observation Location").openPopup();
+        }
       }
     }
 
-    // Favorites functionality
-    let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    // Favourites functionality
+    let favorites = JSON.parse(localStorage.getItem('favourites') || '[]');
     let currentLocation = null;
 
-    function updateFavoritesList() {
+    function updateFavouritesList() {
       const favoritesList = document.getElementById('favoritesList');
-      favoritesList.innerHTML = '';
+      if (!favoritesList) return;
       
-      favorites.forEach((fav, index) => {
-        const favItem = document.createElement('div');
-        favItem.className = 'favorite-item';
-        favItem.innerHTML = `
+      favoritesList.innerHTML = favorites.map((fav, index) => `
+        <div class="favorite-item">
           <span>${fav.name}</span>
-          <span class="edit-btn" onclick="editFavorite(${index})">✏️</span>
-          <span class="remove-btn" onclick="removeFavorite(${index})">×</span>
-        `;
-        favItem.onclick = (e) => {
-          if (!e.target.classList.contains('remove-btn') && !e.target.classList.contains('edit-btn')) {
-            searchLocation(fav.name);
-          }
-        };
-        favoritesList.appendChild(favItem);
-      });
+          <button onclick="searchLocation('${fav.name}')">🔍</button>
+          <button onclick="removeFavourite(${index})">✕</button>
+        </div>
+      `).join('');
     }
 
-    function saveFavorite() {
+    function saveFavourite() {
       if (!currentLocation) return;
       
-      const name = prompt('Enter a name for this location:', currentLocation.name);
-      if (!name) return;
-
-      if (favorites.length >= 6) {
-        alert('You can only save up to 6 favorite locations. Please remove one first.');
-        return;
-      }
-
-      favorites.push({
-        name: name,
-        lat: currentLocation.lat,
-        lon: currentLocation.lon
-      });
-
-      localStorage.setItem('favorites', JSON.stringify(favorites));
-      updateFavoritesList();
-      updateSaveButton();
-    }
-
-    function removeFavorite(index) {
-      if (confirm('Are you sure you want to remove this favorite?')) {
-        favorites.splice(index, 1);
-        localStorage.setItem('favorites', JSON.stringify(favorites));
-        updateFavoritesList();
+      const isAlreadySaved = favorites.some(fav => 
+        fav.name === currentLocation.name && 
+        fav.lat === currentLocation.lat && 
+        fav.lon === currentLocation.lon
+      );
+      
+      if (!isAlreadySaved) {
+        if (favorites.length >= 6) {
+          alert('You can only save up to 6 favourite locations.');
+          return;
+        }
+        favorites.push(currentLocation);
+        localStorage.setItem('favourites', JSON.stringify(favorites));
+        updateFavouritesList();
         updateSaveButton();
       }
     }
 
-    function editFavorite(index) {
-      const newName = prompt('Enter a new name for this location:', favorites[index].name);
-      if (newName) {
-        favorites[index].name = newName;
-        localStorage.setItem('favorites', JSON.stringify(favorites));
-        updateFavoritesList();
+    function removeFavourite(index) {
+      if (confirm('Are you sure you want to remove this favourite?')) {
+        favorites.splice(index, 1);
+        localStorage.setItem('favourites', JSON.stringify(favorites));
+        updateFavouritesList();
+        updateSaveButton();
       }
     }
 
     function updateSaveButton() {
       const saveBtn = document.getElementById('saveFavoriteBtn');
+      if (!saveBtn) return;
+
       if (!currentLocation) {
         saveBtn.style.display = 'none';
         return;
@@ -538,33 +1566,58 @@
 
       saveBtn.style.display = 'block';
       const isSaved = favorites.some(fav => 
-        fav.lat === currentLocation.lat && fav.lon === currentLocation.lon
+        fav.name === currentLocation.name && 
+        fav.lat === currentLocation.lat && 
+        fav.lon === currentLocation.lon
       );
-      saveBtn.textContent = isSaved ? '✓ Saved to Favorites' : 'Save as Favorite';
+      saveBtn.textContent = isSaved ? 'Saved' : 'Save as Favourite';
       saveBtn.className = `save-favorite-btn ${isSaved ? 'saved' : ''}`;
     }
 
-    // Modify the existing searchLocation function
-    async function searchLocation(city) {
-      try {
-        // ... existing searchLocation code ...
-
-        // Update current location and save button
-        currentLocation = { name: city, lat, lon };
-        updateSaveButton();
-
-        // ... rest of the existing searchLocation code ...
-      } catch (error) {
-        console.error('Error:', error);
-        result.textContent = 'Error fetching data. Please try again.';
+    // Initialise favourites list and add event listener for save button
+    updateFavouritesList();
+    document.addEventListener('click', function(e) {
+      if (e.target && e.target.classList.contains('save-favorite-btn')) {
+        saveFavourite();
       }
+    });
+
+    // Get current location on page load
+    useMyLocation();
+
+    // Add to Home Screen functionality
+    let deferredPrompt;
+    const addToHomeBtn = document.getElementById('addToHomeBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      addToHomeBtn.style.display = 'block';
+    });
+
+    addToHomeBtn.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        } else {
+          console.log('User dismissed the install prompt');
+        }
+        deferredPrompt = null;
+        addToHomeBtn.style.display = 'none';
+      }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      addToHomeBtn.style.display = 'none';
+      deferredPrompt = null;
+    });
+
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      addToHomeBtn.style.display = 'none';
     }
-
-    // Initialize favorites list
-    updateFavoritesList();
-
-    // Add event listener for save button
-    document.getElementById('saveFavoriteBtn').addEventListener('click', saveFavorite);
   </script>
 </body>
 </html>
