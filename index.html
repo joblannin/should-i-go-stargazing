@@ -35,7 +35,7 @@
     }
     .banner {
       width: 100%;
-      height: 300px;
+      height: 250px;
       object-fit: cover;
       border-radius: 10px;
       margin-bottom: 2rem;
@@ -96,9 +96,28 @@
       align-items: center;
       gap: 8px;
       transition: transform 0.2s;
+      font-size: 0.9rem;
     }
     .favorite-item:hover {
       transform: translateY(-2px);
+    }
+    .favorite-item button {
+      background: none;
+      border: none;
+      color: white;
+      padding: 0;
+      margin: 0;
+      width: auto;
+      height: auto;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .favorite-item button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: none;
     }
     .search-container {
       background-color: #3d3d3d;
@@ -458,6 +477,17 @@
       color: #4a90e2;
       margin-bottom: 0.5rem;
     }
+    .constellation-name a {
+      color: inherit;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+    }
+    .constellation-name a:hover {
+      background-color: #4a90e2;
+      color: white;
+    }
     .constellation-details {
       font-size: 0.9rem;
       color: #8ab4e6;
@@ -465,6 +495,21 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
+    }
+    .wiki-link {
+      display: inline-block;
+      margin-top: 0.5rem;
+      color: #4a90e2;
+      text-decoration: none;
+      font-size: 0.9rem;
+      padding: 0.3rem 0.5rem;
+      border-radius: 4px;
+      transition: all 0.3s ease;
+      background-color: rgba(74, 144, 226, 0.1);
+    }
+    .wiki-link:hover {
+      background-color: #4a90e2;
+      color: white;
     }
     .night-sky-info {
       margin: 1rem 0;
@@ -513,7 +558,7 @@
         font-size: 1.8rem;
       }
       .banner {
-        height: 200px;
+        height: 150px;
         margin-bottom: 1.5rem;
       }
       .subtitle {
@@ -521,6 +566,19 @@
       }
       .favorites-section, .search-container {
         padding: 1rem;
+      }
+      .favorites-title {
+        font-size: 1.1rem;
+      }
+      .favorites-list {
+        gap: 8px;
+      }
+      .favorite-item {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+      }
+      .favorite-item button {
+        font-size: 0.9rem;
       }
       button {
         padding: 10px 15px;
@@ -579,7 +637,7 @@
         font-size: 2rem;
       }
       .banner {
-        height: 250px;
+        height: 200px;
       }
       .constellation-list {
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1148,25 +1206,25 @@
         // Update celestial objects list with Southern Hemisphere objects
         const celestialObjects = [
           // Bright Stars
-          { name: "Sirius", type: "Star", ra: 6.75, dec: -16.7, magnitude: -1.46, description: "Brightest star in the night sky" },
-          { name: "Canopus", type: "Star", ra: 6.4, dec: -52.7, magnitude: -0.74, description: "Second brightest star" },
-          { name: "Alpha Centauri", type: "Star", ra: 14.66, dec: -60.8, magnitude: -0.27, description: "Closest star system to Earth" },
-          { name: "Arcturus", type: "Star", ra: 14.26, dec: 19.2, magnitude: -0.05, description: "Bright orange giant star" },
-          { name: "Vega", type: "Star", ra: 18.62, dec: 38.8, magnitude: 0.03, description: "Bright blue-white star" },
-          { name: "Capella", type: "Star", ra: 5.28, dec: 46.0, magnitude: 0.08, description: "Bright yellow binary star" },
-          { name: "Rigel", type: "Star", ra: 5.24, dec: -8.2, magnitude: 0.13, description: "Blue supergiant in Orion" },
-          { name: "Procyon", type: "Star", ra: 7.66, dec: 5.2, magnitude: 0.34, description: "Bright binary star" },
-          { name: "Achernar", type: "Star", ra: 1.63, dec: -57.2, magnitude: 0.46, description: "Brightest star in Eridanus" },
-          { name: "Betelgeuse", type: "Star", ra: 5.92, dec: 7.4, magnitude: 0.5, description: "Red supergiant in Orion" },
-          { name: "Hadar", type: "Star", ra: 14.07, dec: -60.4, magnitude: 0.61, description: "Bright blue giant in Centaurus" },
-          { name: "Acrux", type: "Star", ra: 12.44, dec: -63.1, magnitude: 0.77, description: "Brightest star in Crux" },
+          { name: "Sirius", type: "Star", ra: 6.75, dec: -16.7, magnitude: -1.46, description: "Brightest star in the night sky", wiki: "https://en.wikipedia.org/wiki/Sirius" },
+          { name: "Canopus", type: "Star", ra: 6.4, dec: -52.7, magnitude: -0.74, description: "Second brightest star", wiki: "https://en.wikipedia.org/wiki/Canopus" },
+          { name: "Alpha Centauri", type: "Star", ra: 14.66, dec: -60.8, magnitude: -0.27, description: "Closest star system to Earth", wiki: "https://en.wikipedia.org/wiki/Alpha_Centauri" },
+          { name: "Arcturus", type: "Star", ra: 14.26, dec: 19.2, magnitude: -0.05, description: "Bright orange giant star", wiki: "https://en.wikipedia.org/wiki/Arcturus" },
+          { name: "Vega", type: "Star", ra: 18.62, dec: 38.8, magnitude: 0.03, description: "Bright blue-white star", wiki: "https://en.wikipedia.org/wiki/Vega" },
+          { name: "Capella", type: "Star", ra: 5.28, dec: 46.0, magnitude: 0.08, description: "Bright yellow binary star", wiki: "https://en.wikipedia.org/wiki/Capella" },
+          { name: "Rigel", type: "Star", ra: 5.24, dec: -8.2, magnitude: 0.13, description: "Blue supergiant in Orion", wiki: "https://en.wikipedia.org/wiki/Rigel" },
+          { name: "Procyon", type: "Star", ra: 7.66, dec: 5.2, magnitude: 0.34, description: "Bright binary star", wiki: "https://en.wikipedia.org/wiki/Procyon" },
+          { name: "Achernar", type: "Star", ra: 1.63, dec: -57.2, magnitude: 0.46, description: "Brightest star in Eridanus", wiki: "https://en.wikipedia.org/wiki/Achernar" },
+          { name: "Betelgeuse", type: "Star", ra: 5.92, dec: 7.4, magnitude: 0.5, description: "Red supergiant in Orion", wiki: "https://en.wikipedia.org/wiki/Betelgeuse" },
+          { name: "Hadar", type: "Star", ra: 14.07, dec: -60.4, magnitude: 0.61, description: "Bright blue giant in Centaurus", wiki: "https://en.wikipedia.org/wiki/Beta_Centauri" },
+          { name: "Acrux", type: "Star", ra: 12.44, dec: -63.1, magnitude: 0.77, description: "Brightest star in Crux", wiki: "https://en.wikipedia.org/wiki/Alpha_Crucis" },
           
           // Deep Sky Objects
-          { name: "Omega Centauri", type: "Globular Cluster", ra: 13.67, dec: -47.5, magnitude: 3.7, description: "Largest globular cluster in Milky Way" },
-          { name: "47 Tucanae", type: "Globular Cluster", ra: 0.52, dec: -72.1, magnitude: 4.1, description: "Second brightest globular cluster" },
-          { name: "Jewel Box", type: "Open Cluster", ra: 12.53, dec: -60.8, magnitude: 4.2, description: "Colorful star cluster in Crux" },
-          { name: "Tarantula Nebula", type: "Nebula", ra: 5.53, dec: -69.1, magnitude: 5.0, description: "Largest star-forming region in Local Group" },
-          { name: "Carina Nebula", type: "Nebula", ra: 10.77, dec: -59.9, magnitude: 1.0, description: "Large star-forming region" }
+          { name: "Omega Centauri", type: "Globular Cluster", ra: 13.67, dec: -47.5, magnitude: 3.7, description: "Largest globular cluster in Milky Way", wiki: "https://en.wikipedia.org/wiki/Omega_Centauri" },
+          { name: "47 Tucanae", type: "Globular Cluster", ra: 0.52, dec: -72.1, magnitude: 4.1, description: "Second brightest globular cluster", wiki: "https://en.wikipedia.org/wiki/47_Tucanae" },
+          { name: "Jewel Box", type: "Open Cluster", ra: 12.53, dec: -60.8, magnitude: 4.2, description: "Colorful star cluster in Crux", wiki: "https://en.wikipedia.org/wiki/Jewel_Box_(star_cluster)" },
+          { name: "Tarantula Nebula", type: "Nebula", ra: 5.53, dec: -69.1, magnitude: 5.0, description: "Largest star-forming region in Local Group", wiki: "https://en.wikipedia.org/wiki/Tarantula_Nebula" },
+          { name: "Carina Nebula", type: "Nebula", ra: 10.77, dec: -59.9, magnitude: 1.0, description: "Large star-forming region", wiki: "https://en.wikipedia.org/wiki/Carina_Nebula" }
         ];
 
         // Calculate object visibility and rise/set times
@@ -1307,7 +1365,11 @@
           finalObjects.forEach(object => {
             output += `
               <div class="constellation-item">
-                <div class="constellation-name">${object.name} (${object.type})</div>
+                <div class="constellation-name">
+                  <a href="${object.wiki}" target="_blank" title="Learn more about ${object.name} on Wikipedia">
+                    ${object.name} (${object.type})
+                  </a>
+                </div>
                 <div class="constellation-details">
                   ${object.description}<br>
                   Magnitude: ${object.magnitude}
@@ -1323,7 +1385,7 @@
           <div class="night-sky-heading">Night Sky Tonight</div>
           <div class="night-sky-details">
             <p>For detailed information about planets, constellations, and other celestial objects visible tonight, visit:</p>
-            <a href="https://www.timeanddate.com/astronomy/night/" target="_blank" class="night-sky-link">🌌 View Detailed Night Sky Information</a>
+            <a href="https://www.timeanddate.com/astronomy/night/" target="_blank" class="night-sky-link">View Detailed Night Sky Information</a>
           </div>
         </div>`;
 
@@ -1552,6 +1614,17 @@
             color: #4a90e2;
             margin-bottom: 0.5rem;
           }
+          .constellation-name a {
+            color: inherit;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+          }
+          .constellation-name a:hover {
+            background-color: #4a90e2;
+            color: white;
+          }
           .constellation-details {
             font-size: 0.9rem;
             color: #8ab4e6;
@@ -1559,6 +1632,21 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
+          }
+          .wiki-link {
+            display: inline-block;
+            margin-top: 0.5rem;
+            color: #4a90e2;
+            text-decoration: none;
+            font-size: 0.9rem;
+            padding: 0.3rem 0.5rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            background-color: rgba(74, 144, 226, 0.1);
+          }
+          .wiki-link:hover {
+            background-color: #4a90e2;
+            color: white;
           }
           .night-sky-info {
             margin: 1rem 0;
@@ -1765,7 +1853,7 @@
       
       favoritesList.innerHTML = favorites.map((fav, index) => `
         <div class="favorite-item">
-          <span>${fav.name}</span>
+          <span>${fav.name.split(',')[0]}</span>
           <button onclick="searchLocation('${fav.name}')">🔍</button>
           <button onclick="removeFavourite(${index})">✕</button>
         </div>
