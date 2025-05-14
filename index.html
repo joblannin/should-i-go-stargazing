@@ -2,10 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
+  <meta name="theme-color" content="#2d2d2d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.json" />
   <title>Should I Go Stargazing?</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css?v=1" />
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js?v=1"></script>
@@ -124,6 +128,13 @@
       display: flex;
       gap: 12px;
       margin: 1rem 0;
+    }
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin: 1rem 0;
+      justify-content: center;
+      flex-wrap: wrap;
     }
     button {
       padding: 12px 20px;
@@ -435,6 +446,9 @@
       padding: 1rem;
       border-radius: 8px;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
     .constellation-name {
       font-weight: bold;
@@ -444,6 +458,10 @@
     .constellation-details {
       font-size: 0.9rem;
       color: #8ab4e6;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     .night-sky-info {
       margin: 1rem 0;
@@ -479,6 +497,167 @@
       background-color: #4a90e2;
       color: white;
     }
+
+    /* Enhanced mobile responsiveness */
+    @media (max-width: 480px) {
+      body {
+        padding: 1rem;
+      }
+      .container {
+        padding: 15px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      .banner {
+        height: 200px;
+        margin-bottom: 1.5rem;
+      }
+      .subtitle {
+        font-size: 1rem;
+      }
+      .favorites-section, .search-container {
+        padding: 1rem;
+      }
+      button {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+        width: 100%;
+      }
+      .button-group {
+        flex-direction: column;
+        width: 100%;
+      }
+      .input-group {
+        flex-direction: column;
+      }
+      .location-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      .save-favorite-btn {
+        align-self: flex-end;
+      }
+      .temp-feels, .humidity-wind {
+        grid-template-columns: 1fr;
+      }
+      .moon-links {
+        flex-direction: column;
+      }
+      .constellation-list {
+        grid-template-columns: 1fr;
+      }
+      #map {
+        height: 250px;
+      }
+    }
+
+    @media (min-width: 481px) and (max-width: 767px) {
+      body {
+        padding: 1.5rem;
+      }
+      .container {
+        padding: 15px;
+      }
+      h1 {
+        font-size: 2rem;
+      }
+      .banner {
+        height: 250px;
+      }
+      .constellation-list {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      }
+      .temp-feels, .humidity-wind {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    /* Tablet and larger screens */
+    @media (min-width: 768px) and (max-width: 1024px) {
+      .container {
+        max-width: 90%;
+      }
+      .constellation-list {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+    }
+
+    /* Landscape orientation adjustments */
+    @media (max-height: 500px) and (orientation: landscape) {
+      body {
+        padding: 0.5rem;
+      }
+      .banner {
+        height: 150px;
+        margin-bottom: 1rem;
+      }
+      h1 {
+        font-size: 1.5rem;
+        padding-top: 0.5rem;
+      }
+      .subtitle {
+        margin-bottom: 1rem;
+      }
+      #map {
+        height: 200px;
+        margin: 1rem 0;
+      }
+      .constellation-list {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+    }
+
+    /* Dark mode optimization */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: radial-gradient(#000 60%, #111);
+      }
+      .container {
+        background-color: #2d2d2d;
+      }
+      input {
+        background-color: #2d2d2d;
+        color: #ffffff;
+      }
+    }
+
+    /* High contrast mode for accessibility */
+    @media (prefers-contrast: high) {
+      body {
+        color: white;
+        background: black;
+      }
+      .container {
+        background-color: #111;
+        border: 2px solid white;
+      }
+      .subtitle, h1, .constellation-name, .moon-heading, .night-sky-heading, .current-status-heading, .stargazing-heading {
+        color: white;
+      }
+      button, .save-favorite-btn {
+        border: 2px solid white;
+      }
+    }
+
+    /* Print styles */
+    @media print {
+      body {
+        background: white;
+        color: black;
+      }
+      .container {
+        box-shadow: none;
+        max-width: 100%;
+      }
+      #map {
+        break-inside: avoid;
+      }
+      .add-to-home, button {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -509,8 +688,10 @@
         />
         <div id="suggestions" class="suggestions"></div>
       </div>
-      <button id="searchBtn">Check by City</button>
-      <button id="gpsBtn">Use My Location</button>
+      <div class="button-group">
+        <button id="searchBtn">Check by City</button>
+        <button id="gpsBtn">Use My Location</button>
+      </div>
       <div id="result"></div>
     </div>
 
@@ -1303,6 +1484,9 @@
             padding: 1rem;
             border-radius: 8px;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
           }
           .constellation-name {
             font-weight: bold;
@@ -1312,6 +1496,10 @@
           .constellation-details {
             font-size: 0.9rem;
             color: #8ab4e6;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
           }
           .night-sky-info {
             margin: 1rem 0;
