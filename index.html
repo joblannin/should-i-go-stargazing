@@ -204,7 +204,7 @@
     /* ── Data sections — single card layer, no nesting ────────────── */
     .time-info, .sun-times, .astronomical-twilight, .moon-info,
     .cloud-info, .current-conditions, .weather-details, .astronomical-info,
-    .stargazing-conditions {
+    .stargazing-conditions, .planet-section {
       margin: 0.9rem 0;
       padding: 1rem;
       background: var(--bg-card);
@@ -257,6 +257,31 @@
     .moon-links { display: flex; flex-direction: row; justify-content: center; gap: 0.5rem; margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px solid var(--accent-border); flex-wrap: wrap; }
     .moon-link { color: var(--accent-dim); text-decoration: none; font-size: 0.88rem; padding: 0.3rem 0.5rem; border-radius: 4px; transition: all 0.2s; white-space: normal; display: inline-block; }
     .moon-link:hover { background: var(--accent-glow); color: var(--accent); }
+
+    /* ── Planet section ─────────────────────────────────────────── */
+    .planet-section { margin-top: 0.6rem; }
+    .planet-heading { font-size: 1.05rem; font-weight: bold; color: var(--accent); margin-bottom: 0.6rem; }
+    .planet-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .planet-card {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      padding: 0.6rem 0.75rem; border-radius: 10px;
+      border: 1px solid var(--accent-border);
+      background: rgba(255,255,255,0.04);
+      transition: background 0.2s;
+    }
+    .planet-card.planet-down { opacity: 0.5; }
+    .planet-card:hover { background: rgba(255,255,255,0.07); }
+    .planet-symbol { font-size: 1.6rem; line-height: 1; min-width: 1.8rem; text-align: center; font-family: serif; }
+    .planet-card-body { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; }
+    .planet-name { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .planet-name a { color: var(--text-primary); font-weight: bold; font-size: 0.95rem; text-decoration: none; }
+    .planet-name a:hover { color: var(--accent); }
+    .planet-status { font-size: 0.75rem; border-radius: 20px; padding: 1px 8px; }
+    .planet-status.up   { color: var(--green-ok);  background: rgba(91,223,138,0.12); }
+    .planet-status.down { color: var(--text-muted); background: rgba(255,255,255,0.06); }
+    .planet-times { display: flex; gap: 1rem; font-size: 0.82rem; color: var(--text-secondary); flex-wrap: wrap; }
+    .planet-times strong { color: var(--text-primary); }
+    .planet-desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
 
     /* ── Cloud forecast ──────────────────────────────────────────── */
     .cloud-forecast { margin-top: 0.6rem; padding: 0.4rem 0; text-align: center; }
@@ -1047,34 +1072,112 @@
         ];
 
         // ── Dynamic planets via Astronomy Engine ──────────────────────────────
-        const planetEmojis = { Mercury:"☿️", Venus:"🌟", Mars:"🔴", Jupiter:"🪐", Saturn:"🪐", Uranus:"🔵", Neptune:"🔵" };
+        const planetEmojis   = { Mercury:"☿", Venus:"♀", Mars:"♂", Jupiter:"♃", Saturn:"♄", Uranus:"⛢", Neptune:"♆" };
+        const planetColours  = { Mercury:"#b0c4de", Venus:"#ffe4b5", Mars:"#ff6b4a", Jupiter:"#f4a460", Saturn:"#daa520", Uranus:"#7fffd4", Neptune:"#4169e1" };
+        const planetDescriptions = {
+          Mercury: "The innermost planet — tricky to spot, best seen near the horizon at dusk or dawn",
+          Venus:   "The brightest planet — brilliant at dusk or dawn, shows phases like the Moon through a telescope",
+          Mars:    "The Red Planet — its rusty colour is unmistakable; surface features visible through a telescope",
+          Jupiter: "King of the planets — its four Galilean moons are visible through binoculars",
+          Saturn:  "The ringed planet — its iconic rings are breathtaking even through a small telescope",
+          Uranus:  "The ice giant — appears as a tiny blue-green disc; just visible to the naked eye under dark skies",
+          Neptune: "The outermost planet — needs binoculars or a telescope to spot as a small blue-green dot",
+        };
         const planetBodies = ["Mercury","Venus","Mars","Jupiter","Saturn","Uranus","Neptune"];
         const planetObjects = [];
+        const planetRiseSetData = [];
+
         if (window.Astronomy) {
-          const observer = new Astronomy.Observer(lat, lon, 0);
+          const observer  = new Astronomy.Observer(lat, lon, 0);
+          const nightStart = new Date(nextNightStart * 1000);
+          const nightEnd   = new Date(nextNightEnd   * 1000);
+
           for (const bodyName of planetBodies) {
             try {
-              const eq    = Astronomy.Equator(bodyName, localTime, observer, true, true);
+              // Current equatorial position for altitude calc
+              const eq  = Astronomy.Equator(bodyName, localTime, observer, true, true);
               planetObjects.push({
-                name: bodyName,
-                type: "Planet",
-                ra: eq.ra,
-                dec: eq.dec,
-                magnitude: 0,
-                description: {
-                  Mercury: "The innermost planet — tricky to spot but rewarding, shows phases like the Moon",
-                  Venus:   "The brightest planet in the sky — dazzling at dawn or dusk, showing phases through a telescope",
-                  Mars:    "The Red Planet — look for its distinctive ruddy colour; shows polar ice caps and surface features",
-                  Jupiter: "The giant of the solar system — its four Galilean moons are visible in binoculars",
-                  Saturn:  "The ringed planet — its iconic ring system is breathtaking even through a small telescope",
-                  Uranus:  "The ice giant — appears as a small blue-green disc; barely visible to the naked eye",
-                  Neptune: "The outermost planet — needs binoculars to spot; appears as a tiny blue-green dot",
-                }[bodyName] || `${bodyName} is visible tonight`,
+                name: bodyName, type: "Planet",
+                ra: eq.ra, dec: eq.dec, magnitude: 0,
+                description: planetDescriptions[bodyName] || `${bodyName} is visible tonight`,
                 wiki: `https://en.wikipedia.org/wiki/${bodyName}`,
-                emoji: planetEmojis[bodyName] || "🔵",
               });
-            } catch(e) { /* skip if engine can't compute */ }
+
+              // Rise/set search — look in a 24-hour window around tonight
+              let riseTime = null, setTime = null;
+              try {
+                const riseResult = Astronomy.SearchRiseSet(bodyName, observer, +1, nightStart, 1);
+                if (riseResult) riseTime = riseResult.date;
+              } catch(e) {}
+              try {
+                const setResult  = Astronomy.SearchRiseSet(bodyName, observer, -1, nightStart, 1);
+                if (setResult) setTime = setResult.date;
+              } catch(e) {}
+
+              // Current altitude to know if above horizon right now
+              const hor = Astronomy.Horizon(localTime, observer, eq.ra, eq.dec, 'normal');
+              const altNow = hor.altitude;
+
+              // Is it up at any point during the night window?
+              const upDuringNight = (() => {
+                // sample altitude at 4 points through the night
+                const samples = [0, 0.25, 0.5, 0.75, 1].map(f => {
+                  const t = new Date(nightStart.getTime() + f * (nightEnd - nightStart));
+                  try {
+                    const h = Astronomy.Horizon(t, observer, eq.ra, eq.dec, 'normal');
+                    return h.altitude;
+                  } catch(e) { return -90; }
+                });
+                return samples.some(a => a > 5);
+              })();
+
+              planetRiseSetData.push({
+                name: bodyName,
+                emoji: planetEmojis[bodyName],
+                colour: planetColours[bodyName],
+                riseTime, setTime, altNow, upDuringNight,
+                description: planetDescriptions[bodyName],
+                wiki: `https://en.wikipedia.org/wiki/${bodyName}`,
+              });
+            } catch(e) { /* skip */ }
           }
+        }
+
+        // ── Planet visibility section ─────────────────────────────────────────
+        if (planetRiseSetData.length > 0) {
+          const fmt = (d) => d instanceof Date && !isNaN(d)
+            ? d.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit', hour12:true })
+            : '—';
+
+          output += `<div class="planet-section">
+            <div class="planet-heading">🪐 Planets Tonight</div>
+            <div class="planet-list">`;
+
+          for (const p of planetRiseSetData) {
+            const statusLabel = p.upDuringNight
+              ? `<span class="planet-status up">● Visible tonight</span>`
+              : `<span class="planet-status down">● Below horizon</span>`;
+
+            const riseStr = p.riseTime ? fmt(p.riseTime) : '—';
+            const setStr  = p.setTime  ? fmt(p.setTime)  : '—';
+
+            output += `<div class="planet-card ${p.upDuringNight ? 'planet-up' : 'planet-down'}">
+              <div class="planet-symbol" style="color:${p.colour}">${p.emoji}</div>
+              <div class="planet-card-body">
+                <div class="planet-name">
+                  <a href="${p.wiki}" target="_blank">${p.name}</a>
+                  ${statusLabel}
+                </div>
+                <div class="planet-times">
+                  <span>🌅 Rises: <strong>${riseStr}</strong></span>
+                  <span>🌇 Sets: <strong>${setStr}</strong></span>
+                </div>
+                <div class="planet-desc">${p.description}</div>
+              </div>
+            </div>`;
+          }
+
+          output += `</div></div>`;
         }
 
         // ── Meteor shower calendar ────────────────────────────────────────────
