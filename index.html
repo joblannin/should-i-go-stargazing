@@ -444,57 +444,87 @@
       }
     }
     .constellation-guide {
-      margin: 1rem 0;
-      padding: 1rem;
-      background-color: #2d2d2d;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      margin: 1.5rem 0;
+      padding: 1.5rem;
+      background: linear-gradient(135deg, #1a1040 0%, #0d1b2a 100%);
+      border-radius: 12px;
+      border: 1px solid rgba(138, 100, 255, 0.3);
+      box-shadow: 0 0 24px rgba(100, 60, 200, 0.2), 0 4px 12px rgba(0,0,0,0.4);
     }
     .constellation-heading {
-      font-size: 1.2rem;
+      font-size: 1.5rem;
       font-weight: bold;
-      color: #4a90e2;
-      margin-bottom: 0.5rem;
+      color: #c8a8ff;
+      margin-bottom: 0.3rem;
       text-align: center;
+      letter-spacing: 1px;
+      text-shadow: 0 0 12px rgba(180, 130, 255, 0.5);
+    }
+    .constellation-subheading {
+      font-size: 0.85rem;
+      color: #8a7aaf;
+      text-align: center;
+      margin-bottom: 1rem;
+      font-style: italic;
     }
     .constellation-list {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1rem;
-      margin-top: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.9rem;
+      margin-top: 0.5rem;
     }
     .constellation-item {
-      background-color: #3d3d3d;
-      padding: 1rem;
-      border-radius: 8px;
-      text-align: center;
+      background: linear-gradient(160deg, #241850 0%, #1a1035 100%);
+      padding: 1rem 1.1rem;
+      border-radius: 10px;
+      border: 1px solid rgba(138, 100, 255, 0.25);
+      text-align: left;
       display: flex;
       flex-direction: column;
-      height: 100%;
+      gap: 0.3rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .constellation-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(100, 60, 200, 0.3);
+    }
+    .constellation-item-emoji {
+      font-size: 1.6rem;
+      line-height: 1;
     }
     .constellation-name {
       font-weight: bold;
-      color: #4a90e2;
-      margin-bottom: 0.5rem;
+      color: #d4b8ff;
+      font-size: 1rem;
+      margin-top: 0.2rem;
     }
     .constellation-name a {
       color: inherit;
       text-decoration: none;
-      transition: all 0.3s ease;
-      padding: 0.2rem 0.4rem;
-      border-radius: 4px;
+      transition: color 0.2s;
     }
     .constellation-name a:hover {
-      background-color: #4a90e2;
-      color: white;
+      color: #fff;
+      text-decoration: underline;
+    }
+    .constellation-type-badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #9a7abf;
+      font-weight: 600;
+    }
+    .constellation-alt {
+      font-size: 0.8rem;
+      color: #7dbfff;
+      font-weight: 600;
     }
     .constellation-details {
-      font-size: 0.9rem;
-      color: #8ab4e6;
+      font-size: 0.82rem;
+      color: #b0a0cc;
+      line-height: 1.4;
       flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
     }
     .wiki-link {
       display: inline-block;
@@ -1289,11 +1319,13 @@
           };
         }
 
-        // Add celestial objects section
-        output += `<div class="constellation-guide">
-          <div class="constellation-heading">Top Celestial Objects for Tonight</div>
-          <div class="constellation-list">`;
-        
+        // ── Top Celestial Objects ───────────────────────────────────────────────
+        const typeEmoji = {
+          "Star": "⭐", "Galaxy": "🌀", "Nebula": "🌫️",
+          "Globular Cluster": "💫", "Star Cluster": "✨",
+          "Supernova Remnant": "💥"
+        };
+
         // Calculate visibility for all objects, filter, then pick best mix
         const visibleObjects = celestialObjects
           .map(object => {
@@ -1304,44 +1336,96 @@
           .sort((a, b) => b.altitude - a.altitude);
 
         // Pick up to 3 deep-sky objects and up to 3 stars for variety
-        const visibleStars  = visibleObjects.filter(obj => obj.type === "Star");
+        const visibleStars   = visibleObjects.filter(obj => obj.type === "Star");
         const visibleDeepSky = visibleObjects.filter(obj => obj.type !== "Star");
-        const finalObjects = [
+        const finalObjects   = [
           ...visibleDeepSky.slice(0, 3),
           ...visibleStars.slice(0, 3)
         ].sort((a, b) => b.altitude - a.altitude);
-        
-        console.log(`\nTotal objects checked: ${celestialObjects.length}`);
-        console.log(`Visible stars found: ${visibleStars.length}`);
-        console.log(`Visible deep sky objects found: ${visibleDeepSky.length}`);
-        
+
+        output += `<div class="constellation-guide">
+          <div class="constellation-heading">🌌 Top Celestial Objects for Tonight</div>
+          <div class="constellation-subheading">Objects above 15° at your location — click any name to learn more</div>
+          <div class="constellation-list">`;
+
         if (finalObjects.length === 0) {
-          output += `
-            <div class="constellation-item">
-              <div class="constellation-name">No objects visible tonight</div>
-              <div class="constellation-details">
-                Check back tomorrow for visible objects
-              </div>
-            </div>`;
+          output += `<div class="constellation-item">
+            <div class="constellation-name">No objects visible tonight</div>
+            <div class="constellation-details">Check back tomorrow</div>
+          </div>`;
         } else {
           finalObjects.forEach(object => {
-            const altText = object.altitude > 0 ? ` · ${object.altitude.toFixed(0)}° above horizon` : '';
             output += `
               <div class="constellation-item">
+                <div class="constellation-item-emoji">${typeEmoji[object.type] || "✨"}</div>
                 <div class="constellation-name">
-                  <a href="${object.wiki}" target="_blank" title="Learn more about ${object.name} on Wikipedia">
-                    ${object.name} (${object.type})
-                  </a>
+                  <a href="${object.wiki}" target="_blank">${object.name}</a>
                 </div>
-                <div class="constellation-details">
-                  ${object.description}<br>
-                  Magnitude: ${object.magnitude}${altText}
-                </div>
+                <div class="constellation-type-badge">${object.type}</div>
+                ${object.altitude > 0 ? `<div class="constellation-alt">📐 ${object.altitude.toFixed(0)}° above horizon</div>` : ''}
+                <div class="constellation-details">${object.description}</div>
               </div>`;
           });
         }
-        
+
         output += `</div></div>`;
+
+        // ── Top Constellations ───────────────────────────────────────────────────
+        // Each constellation defined by its centre point (RA/Dec of centroid)
+        const constellationCatalogue = [
+          { name: "Orion",        ra: 5.50,  dec: 2.0,   emoji: "🏹", description: "The Hunter — one of the most recognisable constellations, containing Betelgeuse and Rigel.", wiki: "https://en.wikipedia.org/wiki/Orion_(constellation)" },
+          { name: "Scorpius",     ra: 16.90, dec: -30.0, emoji: "🦂", description: "The Scorpion — a brilliant southern constellation with the red giant Antares at its heart.", wiki: "https://en.wikipedia.org/wiki/Scorpius" },
+          { name: "Crux",         ra: 12.45, dec: -60.0, emoji: "✝️", description: "The Southern Cross — the smallest constellation, a famous southern hemisphere icon.", wiki: "https://en.wikipedia.org/wiki/Crux" },
+          { name: "Centaurus",    ra: 13.07, dec: -47.0, emoji: "🐎", description: "The Centaur — a large southern constellation containing Alpha and Proxima Centauri.", wiki: "https://en.wikipedia.org/wiki/Centaurus" },
+          { name: "Sagittarius",  ra: 19.10, dec: -28.0, emoji: "🏹", description: "The Archer — points toward the centre of the Milky Way, rich in nebulae and clusters.", wiki: "https://en.wikipedia.org/wiki/Sagittarius_(constellation)" },
+          { name: "Cygnus",       ra: 20.62, dec: 44.5,  emoji: "🦢", description: "The Swan — contains the Northern Cross and the star Deneb at the tail of the swan.", wiki: "https://en.wikipedia.org/wiki/Cygnus_(constellation)" },
+          { name: "Leo",          ra: 10.67, dec: 13.0,  emoji: "🦁", description: "The Lion — marked by a bright sickle of stars with Regulus at the lion's heart.", wiki: "https://en.wikipedia.org/wiki/Leo_(constellation)" },
+          { name: "Canis Major",  ra: 6.83,  dec: -22.0, emoji: "🐕", description: "The Great Dog — home to Sirius, the brightest star in the night sky.", wiki: "https://en.wikipedia.org/wiki/Canis_Major" },
+          { name: "Aquila",       ra: 19.67, dec: 3.4,   emoji: "🦅", description: "The Eagle — contains the bright star Altair, one corner of the Summer Triangle.", wiki: "https://en.wikipedia.org/wiki/Aquila_(constellation)" },
+          { name: "Gemini",       ra: 7.08,  dec: 22.0,  emoji: "👯", description: "The Twins — marked by the bright stars Castor and Pollux side by side.", wiki: "https://en.wikipedia.org/wiki/Gemini_(constellation)" },
+          { name: "Virgo",        ra: 13.42, dec: -4.0,  emoji: "🌾", description: "The Maiden — the largest zodiac constellation, home to the Virgo galaxy cluster.", wiki: "https://en.wikipedia.org/wiki/Virgo_(constellation)" },
+          { name: "Perseus",      ra: 3.17,  dec: 45.0,  emoji: "⚔️", description: "The Hero — contains the famous variable star Algol and the Double Cluster.", wiki: "https://en.wikipedia.org/wiki/Perseus_(constellation)" },
+          { name: "Auriga",       ra: 6.08,  dec: 42.0,  emoji: "🚗", description: "The Charioteer — hosts the bright star Capella and three Messier open clusters.", wiki: "https://en.wikipedia.org/wiki/Auriga_(constellation)" },
+          { name: "Boötes",       ra: 14.71, dec: 31.0,  emoji: "🌾", description: "The Herdsman — contains Arcturus, the fourth brightest star in the night sky.", wiki: "https://en.wikipedia.org/wiki/Bo%C3%B6tes" },
+          { name: "Cassiopeia",   ra: 1.33,  dec: 62.0,  emoji: "👑", description: "The Queen — a striking W-shape of five bright stars near the North Celestial Pole.", wiki: "https://en.wikipedia.org/wiki/Cassiopeia_(constellation)" },
+          { name: "Vela",         ra: 9.58,  dec: -46.0, emoji: "⛵", description: "The Sails — a southern constellation rich in star clusters, part of the ancient Argo Navis.", wiki: "https://en.wikipedia.org/wiki/Vela_(constellation)" },
+          { name: "Puppis",       ra: 7.58,  dec: -35.0, emoji: "🚢", description: "The Stern — a large southern constellation packed with open clusters and nebulae.", wiki: "https://en.wikipedia.org/wiki/Puppis" },
+          { name: "Aquarius",     ra: 22.28, dec: -10.0, emoji: "🏺", description: "The Water-Bearer — a large zodiac constellation containing several notable nebulae.", wiki: "https://en.wikipedia.org/wiki/Aquarius_(constellation)" },
+          { name: "Lyra",         ra: 18.85, dec: 36.5,  emoji: "🎵", description: "The Lyre — contains Vega (fifth brightest star) and the famous Ring Nebula.", wiki: "https://en.wikipedia.org/wiki/Lyra" },
+          { name: "Taurus",       ra: 4.70,  dec: 17.5,  emoji: "🐂", description: "The Bull — contains the Pleiades and Hyades clusters, plus the Crab Nebula.", wiki: "https://en.wikipedia.org/wiki/Taurus_(constellation)" },
+        ];
+
+        // Find top 3 constellations above the horizon tonight
+        const visibleConstellations = constellationCatalogue
+          .map(c => {
+            const alt = getAltitudeDeg(c.ra, c.dec, lat, lon, localTime);
+            return { ...c, altitude: alt };
+          })
+          .filter(c => c.altitude > 20)
+          .sort((a, b) => b.altitude - a.altitude)
+          .slice(0, 3);
+
+        if (visibleConstellations.length > 0) {
+          output += `<div class="constellation-guide">
+            <div class="constellation-heading">🔭 Top Constellations for Tonight</div>
+            <div class="constellation-subheading">Best placed in the sky right now from your location</div>
+            <div class="constellation-list">`;
+
+          visibleConstellations.forEach(c => {
+            output += `
+              <div class="constellation-item">
+                <div class="constellation-item-emoji">${c.emoji}</div>
+                <div class="constellation-name">
+                  <a href="${c.wiki}" target="_blank">${c.name}</a>
+                </div>
+                <div class="constellation-type-badge">Constellation</div>
+                <div class="constellation-alt">📐 ${c.altitude.toFixed(0)}° above horizon</div>
+                <div class="constellation-details">${c.description}</div>
+              </div>`;
+          });
+
+          output += `</div></div>`;
+        }
 
         // Add night sky information section
         output += `<div class="night-sky-info">
