@@ -1122,13 +1122,16 @@
               const hor = Astronomy.Horizon(localTime, observer, eq.ra, eq.dec, 'normal');
               const altNow = hor.altitude;
 
-              // Is it up at any point during sunset→sunrise? Sample every 30 min
+              // Is it up at any point during sunset→sunrise?
+              // Recompute RA/Dec at each sample time so the sidereal time and
+              // position are both correct (avoids the localTime timezone-offset bug).
               const upDuringNight = (() => {
-                const steps = 20;
+                const steps = 24;
                 for (let i = 0; i <= steps; i++) {
                   const t = new Date(nightStart.getTime() + (i / steps) * (nightEnd - nightStart));
                   try {
-                    const h = Astronomy.Horizon(t, observer, eq.ra, eq.dec, 'normal');
+                    const eqT = Astronomy.Equator(bodyName, t, observer, true, true);
+                    const h   = Astronomy.Horizon(t, observer, eqT.ra, eqT.dec, 'normal');
                     if (h.altitude > 5) return true;
                   } catch(e) {}
                 }
