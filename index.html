@@ -986,18 +986,22 @@
         const moonRiseStr = fmtLocal(moonRiseDate) || 'Does not rise tonight';
         const moonSetStr  = fmtLocal(moonSetDate)  || 'Does not set tonight';
 
-        // Calculate how much of the night window the moon is actually above the horizon
-        // Sample altitude every 30 minutes across the night
-        const MOON_STEPS = 20;
+        // Sample moon altitude between SUNSET and next SUNRISE (the actual dark hours)
+        // sunset/sunrise are Unix timestamps (seconds) from the weather API / SunCalc
+        const sunsetMs  = sunset * 1000;                          // weather API sunset (UTC unix ms)
+        const sunriseMs = tomorrowTimes.sunrise.getTime();        // next morning's sunrise
+        const darkDurMs = sunriseMs - sunsetMs;
+
+        const MOON_STEPS = 24;
         let moonUpCount = 0;
         for (let i = 0; i <= MOON_STEPS; i++) {
-          const t = new Date(nightStartMs + (i / MOON_STEPS) * nightDurMs);
+          const t = new Date(sunsetMs + (i / MOON_STEPS) * darkDurMs);
           const moonPos = SunCalc.getMoonPosition(t, lat, lon);
           if (moonPos.altitude > 0) moonUpCount++;
         }
         const moonUpPct = Math.round((moonUpCount / (MOON_STEPS + 1)) * 100);
         const moonImpact = moonUpPct === 0  ? '🟢 Moon below horizon all night — ideal for deep-sky'
-          : moonUpPct < 25                  ? '🟡 Moon up briefly — mostly dark skies'
+          : moonUpPct < 25                  ? '🟡 Moon up briefly after dark — mostly dark skies'
           : moonUpPct < 55                  ? '🟠 Moon up for part of the night'
                                             : '🔴 Moon up most of the night — affects viewing';
 
