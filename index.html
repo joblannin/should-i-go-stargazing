@@ -201,7 +201,8 @@
 
     /* ── Data sections — single card layer, no nesting ────────────── */
     .time-info, .sun-times, .astronomical-twilight, .moon-info,
-    .cloud-info, .current-conditions, .weather-details, .astronomical-info {
+    .cloud-info, .current-conditions, .weather-details, .astronomical-info,
+    .stargazing-conditions {
       margin: 0.9rem 0;
       padding: 1rem;
       background: var(--bg-card);
@@ -1165,272 +1166,6 @@
         currentLocation = { name: city, lat, lon };
         updateSaveButton();
 
-        // Update CSS styles
-        const style = document.createElement('style');
-        style.textContent = `
-          .current-conditions, .stargazing-conditions {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            margin: 1rem 0;
-            padding: 1rem;
-            background-color: #2d2d2d;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          }
-          .current-status-heading, .stargazing-heading {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #4a90e2;
-            margin-bottom: 0.5rem;
-            text-align: center;
-          }
-          .current-time {
-            font-size: 1.1rem;
-            padding: 0.5rem;
-            text-align: center;
-            background-color: #3d3d3d;
-            border-radius: 4px;
-          }
-          .temp-feels, .humidity-wind {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
-          }
-          .current-temp, .current-feels, .current-humidity, .current-wind {
-            font-size: 1.1rem;
-            padding: 0.5rem;
-            text-align: center;
-            background-color: #3d3d3d;
-            border-radius: 4px;
-          }
-          .cloud-info {
-            font-size: 1.1rem;
-            padding: 0.5rem;
-            text-align: center;
-            background-color: #3d3d3d;
-            border-radius: 4px;
-          }
-          .cloud-forecast {
-            margin-top: 0.5rem;
-            padding: 0.5rem;
-            background-color: #3d3d3d;
-            border-radius: 4px;
-            text-align: center;
-          }
-          .cloud-forecast > div:first-child {
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-          }
-          .cloud-forecast > div {
-            text-align: center;
-          }
-          .recommendation {
-            margin-top: 0.5rem;
-            padding: 0.5rem;
-            text-align: center;
-            background-color: #3d3d3d;
-            border-radius: 4px;
-            font-weight: bold;
-          }
-          .astronomical-info {
-            margin: 1rem 0;
-            padding: 1rem;
-            background-color: #2d2d2d;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          }
-          .astro-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-          }
-          .astro-section {
-            background-color: #3d3d3d;
-            border-radius: 4px;
-            padding: 0.5rem;
-          }
-          .astro-heading {
-            font-size: 1rem;
-            font-weight: bold;
-            color: #4a90e2;
-            margin-bottom: 0.5rem;
-            text-align: center;
-          }
-          .astro-times {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-          }
-          .astro-times div {
-            text-align: center;
-            font-size: 0.9rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          }
-          .moon-info {
-            margin: 0.5rem 0;
-            padding: 0.5rem;
-            background-color: #2d2d2d;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          }
-          .moon-heading {
-            font-size: 1rem;
-            font-weight: bold;
-            color: #4a90e2;
-            margin-bottom: 0.3rem;
-            text-align: center;
-          }
-          .moon-details {
-            display: flex;
-            flex-direction: column;
-            gap: 0.3rem;
-            background-color: #3d3d3d;
-            border-radius: 4px;
-            padding: 0.5rem;
-          }
-          .moon-phase {
-            font-size: 1rem;
-            text-align: center;
-            font-weight: bold;
-          }
-          .moon-description {
-            font-size: 0.9rem;
-            text-align: center;
-            color: #8ab4e6;
-          }
-          .moon-links {
-            display: flex;
-            flex-direction: row;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-top: 0.3rem;
-            padding-top: 0.3rem;
-            border-top: 1px solid #4a90e2;
-            flex-wrap: wrap;
-          }
-          .moon-link {
-            color: #4a90e2;
-            text-decoration: none;
-            font-size: 0.9rem;
-            padding: 0.3rem 0.5rem;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-            text-align: center;
-            white-space: normal;
-            display: inline-block;
-            width: fit-content;
-          }
-          .moon-link:hover {
-            background-color: #4a90e2;
-            color: white;
-          }
-          .constellation-guide {
-            margin: 1rem 0;
-            padding: 1rem;
-            background-color: #2d2d2d;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          }
-          .constellation-heading {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #4a90e2;
-            margin-bottom: 0.5rem;
-            text-align: center;
-          }
-          .constellation-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-          }
-          .constellation-item {
-            background-color: #3d3d3d;
-            padding: 1rem;
-            border-radius: 8px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-          }
-          .constellation-name {
-            font-weight: bold;
-            color: #4a90e2;
-            margin-bottom: 0.5rem;
-          }
-          .constellation-name a {
-            color: inherit;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            padding: 0.2rem 0.4rem;
-            border-radius: 4px;
-          }
-          .constellation-name a:hover {
-            background-color: #4a90e2;
-            color: white;
-          }
-          .constellation-details {
-            font-size: 0.9rem;
-            color: #8ab4e6;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-          }
-          .wiki-link {
-            display: inline-block;
-            margin-top: 0.5rem;
-            color: #4a90e2;
-            text-decoration: none;
-            font-size: 0.9rem;
-            padding: 0.3rem 0.5rem;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-            background-color: rgba(74, 144, 226, 0.1);
-          }
-          .wiki-link:hover {
-            background-color: #4a90e2;
-            color: white;
-          }
-          .night-sky-info {
-            margin: 1rem 0;
-            padding: 1rem;
-            background-color: #2d2d2d;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          }
-          .night-sky-heading {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #4a90e2;
-            margin-bottom: 0.5rem;
-            text-align: center;
-          }
-          .night-sky-details {
-            background-color: #3d3d3d;
-            padding: 1rem;
-            border-radius: 4px;
-            text-align: center;
-          }
-          .night-sky-link {
-            display: inline-block;
-            color: #4a90e2;
-            text-decoration: none;
-            font-size: 1rem;
-            padding: 0.5rem 1rem;
-            margin-top: 0.5rem;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-          }
-          .night-sky-link:hover {
-            background-color: #4a90e2;
-            color: white;
-          }
-        `;
-        document.head.appendChild(style);
       } catch (error) {
         console.error('Error:', error);
         document.getElementById('result').innerHTML = `Error: ${error.message}`;
@@ -1692,8 +1427,17 @@
       }
     });
 
-    // Get current location on page load
-    useMyLocation();
+    // Load default location on page load: Mount Burnett, Victoria
+    (async () => {
+      const defaultCity = "Mount Burnett, Victoria, AU";
+      const defaultLat  = -37.9333;
+      const defaultLon  = 145.4833;
+      currentLocation = { name: defaultCity, lat: defaultLat, lon: defaultLon };
+      updateSaveButton();
+      const locationLabel = document.getElementById('current-location-label');
+      if (locationLabel) locationLabel.textContent = `📍 Showing results for: ${defaultCity}`;
+      await checkConditions(defaultCity, defaultLat, defaultLon);
+    })();
 
     // Add to Home Screen functionality
     let deferredPrompt;
