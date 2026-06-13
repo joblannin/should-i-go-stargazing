@@ -1176,13 +1176,6 @@
             ? d.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit', hour12:true })
             : '—';
 
-          // DEBUG — remove after confirming fix
-          const _dbgNightStart = fmtLocal(new Date(sunset * 1000));
-          const _dbgNightEnd   = fmtLocal(nextSunrise);
-          const _dbgUpFlags    = planetRiseSetData.map(p => `${p.name}:${p.upDuringNight?'UP':'no'}/${p.inEveningSky?'EVE':'—'}`).join(' ');
-          output += `<div style="font-size:10px;color:#ff0;padding:4px;word-break:break-all">
-            DEBUG night: ${_dbgNightStart}→${_dbgNightEnd} | ${_dbgUpFlags}</div>`;
-
           output += `<div class="planet-section">
             <div class="planet-heading">🪐 Planets Tonight</div>
             <div class="planet-list">`;
