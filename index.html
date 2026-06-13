@@ -993,11 +993,10 @@
         const planetBodies = ["Mercury","Venus","Mars","Jupiter","Saturn","Uranus","Neptune"];
         const planetObjects = [];
         if (window.Astronomy) {
-          const observer = Astronomy.Observer(lat, lon, 0);
+          const observer = new Astronomy.Observer(lat, lon, 0);
           for (const bodyName of planetBodies) {
             try {
-              const body  = Astronomy.Body[bodyName];
-              const eq    = Astronomy.Equator(body, localTime, observer, true, true);
+              const eq    = Astronomy.Equator(bodyName, localTime, observer, true, true);
               planetObjects.push({
                 name: bodyName,
                 type: "Planet",
