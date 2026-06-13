@@ -1169,10 +1169,10 @@
                 if (h.altitude > bestAlt) { bestAlt = h.altitude; bestHour = localHour(t); }
               } catch(e) {}
             }
-            if (bestHour === null) return { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.08)', label: 'Not visible tonight', dot: '#666' };
-            if (bestHour >= 18 && bestHour < 23) return { bg: 'rgba(91,223,138,0.08)',  border: 'rgba(91,223,138,0.3)',  label: 'Evening (6pm–11pm)',   dot: '#5bdf8a' };
-            if (bestHour >= 23 || bestHour < 2)  return { bg: 'rgba(255,165,0,0.08)',   border: 'rgba(255,165,0,0.3)',   label: 'Late night (11pm–2am)', dot: '#ffa500' };
-            return                                       { bg: 'rgba(255,80,80,0.08)',   border: 'rgba(255,80,80,0.3)',   label: 'Early morning (2am+)',  dot: '#ff5050' };
+            if (bestHour === null) return { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.08)', label: '', dot: '#666' };
+            if (bestHour >= 18 && bestHour < 23) return { bg: 'rgba(91,223,138,0.08)',  border: 'rgba(91,223,138,0.3)',  label: '', dot: '#5bdf8a' };
+            if (bestHour >= 23 || bestHour < 2)  return { bg: 'rgba(255,165,0,0.08)',   border: 'rgba(255,165,0,0.3)',   label: '', dot: '#ffa500' };
+            return                                       { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.08)', label: '', dot: '#888' };
           };
 
           for (const p of planetRiseSetData) {
@@ -1182,9 +1182,8 @@
 
             output += `<div class="planet-row" style="background:${vc.bg}; border-color:${vc.border}">
               <span class="planet-dot" style="background:${vc.dot}"></span>
-              <span class="planet-row-name" style="color:${p.colour}">${p.name}</span>
+              <span class="planet-row-name">${p.name}</span>
               <span class="planet-row-times">↑ ${riseStr} &nbsp; ↓ ${setStr}</span>
-              <span class="planet-row-label">${vc.label}</span>
             </div>`;
           }
 
