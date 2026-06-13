@@ -130,14 +130,16 @@
       gap: 8px;
       transition: transform 0.2s, box-shadow 0.2s;
       font-size: 0.88rem;
+      cursor: pointer;
     }
     .favorite-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px var(--accent-glow); }
-    .favorite-item button {
+    .favorite-item span { flex: 1; pointer-events: none; }
+    .fav-remove-btn {
       background: none; border: none; color: var(--text-secondary);
-      padding: 0; margin: 0; width: auto; height: auto;
-      font-size: 1rem; cursor: pointer; display: flex; align-items: center;
+      padding: 4px 6px; margin: 0; font-size: 1rem; cursor: pointer;
+      border-radius: 50%; line-height: 1; flex-shrink: 0;
     }
-    .favorite-item button:hover { color: #ff8080; }
+    .fav-remove-btn:hover { color: #ff8080; background: rgba(255,80,80,0.15); }
 
     /* ── Search container ────────────────────────────────────────── */
     .search-container {
@@ -1443,15 +1445,15 @@
       favoritesList.innerHTML = favorites.map((fav, index) => `
         <div class="favorite-item" data-index="${index}">
           <span>${fav.name.split(',')[0]}</span>
-          <button class="fav-search-btn" data-index="${index}" title="Search this location">🔍</button>
           <button class="fav-remove-btn" data-index="${index}" title="Remove favourite">✕</button>
         </div>
       `).join('');
 
-      // Attach click handlers via JS (avoids inline onclick string-escaping issues)
-      favoritesList.querySelectorAll('.fav-search-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const fav = favorites[parseInt(btn.dataset.index)];
+      // Whole card triggers search; only ✕ button removes
+      favoritesList.querySelectorAll('.favorite-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          if (e.target.closest('.fav-remove-btn')) return; // let remove button handle it
+          const fav = favorites[parseInt(item.dataset.index)];
           if (!fav) return;
           currentLocation = { name: fav.name, lat: fav.lat, lon: fav.lon };
           updateSaveButton();
@@ -1462,7 +1464,10 @@
       });
 
       favoritesList.querySelectorAll('.fav-remove-btn').forEach(btn => {
-        btn.addEventListener('click', () => removeFavourite(parseInt(btn.dataset.index)));
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeFavourite(parseInt(btn.dataset.index));
+        });
       });
     }
 
