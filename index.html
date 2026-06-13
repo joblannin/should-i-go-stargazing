@@ -1090,8 +1090,11 @@
 
         if (window.Astronomy) {
           const observer  = new Astronomy.Observer(lat, lon, 0);
-          const nightStart = new Date(nextNightStart * 1000);
-          const nightEnd   = new Date(nextNightEnd   * 1000);
+          // Use sunset→sunrise as the night window (consistent with cloud/moon sections)
+          const nightStart = new Date(sunset * 1000);
+          const nightEnd   = tomorrowTimes.sunrise instanceof Date && !isNaN(tomorrowTimes.sunrise)
+            ? tomorrowTimes.sunrise
+            : new Date(sunset * 1000 + 12 * 3600 * 1000);
 
           for (const bodyName of planetBodies) {
             try {
@@ -1119,17 +1122,17 @@
               const hor = Astronomy.Horizon(localTime, observer, eq.ra, eq.dec, 'normal');
               const altNow = hor.altitude;
 
-              // Is it up at any point during the night window?
+              // Is it up at any point during sunset→sunrise? Sample every 30 min
               const upDuringNight = (() => {
-                // sample altitude at 4 points through the night
-                const samples = [0, 0.25, 0.5, 0.75, 1].map(f => {
-                  const t = new Date(nightStart.getTime() + f * (nightEnd - nightStart));
+                const steps = 20;
+                for (let i = 0; i <= steps; i++) {
+                  const t = new Date(nightStart.getTime() + (i / steps) * (nightEnd - nightStart));
                   try {
                     const h = Astronomy.Horizon(t, observer, eq.ra, eq.dec, 'normal');
-                    return h.altitude;
-                  } catch(e) { return -90; }
-                });
-                return samples.some(a => a > 5);
+                    if (h.altitude > 5) return true;
+                  } catch(e) {}
+                }
+                return false;
               })();
 
               planetRiseSetData.push({
