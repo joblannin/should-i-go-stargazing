@@ -1436,45 +1436,71 @@
       }
 
       result.innerText = "📡 Getting location...";
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          try {
-            const lat = pos.coords.latitude;
-            const lon = pos.coords.longitude;
-            
-            // Get the specific location name from reverse geocoding
-            const geoRes = await fetch(
-              `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`
-            );
-            const geoData = await geoRes.json();
-            
-            let cityName = "Your Location";
-            if (geoData.length > 0) {
-              // Use the most specific name available (local name or name)
-              cityName = geoData[0].local_names?.en || geoData[0].name;
-              if (geoData[0].state) {
-                cityName += `, ${geoData[0].state}`;
-              }
-              if (geoData[0].country) {
-                cityName += `, ${geoData[0].country}`;
-              }
-            }
-            
-            // Update current location for favourites
-            currentLocation = { name: cityName, lat, lon };
-            updateSaveButton();
-            
-            // Check conditions
-            await checkConditions(cityName, lat, lon);
-          } catch (error) {
-            console.error('Error:', error);
-            result.innerText = "Error getting location data. Please try again.";
+
+      const geoOptions = {
+        enableHighAccuracy: false, // faster, uses network/WiFi positioning
+        timeout: 10000,            // 10 second timeout
+        maximumAge: 60000          // accept a cached position up to 1 min old
+      };
+
+      const onGeoSuccess = async (pos) => {
+        try {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+
+          // Get the specific location name from reverse geocoding
+          const geoRes = await fetch(
+            `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`
+          );
+          const geoData = await geoRes.json();
+
+          let cityName = "Your Location";
+          if (geoData.length > 0) {
+            cityName = geoData[0].local_names?.en || geoData[0].name;
+            if (geoData[0].state) cityName += `, ${geoData[0].state}`;
+            if (geoData[0].country) cityName += `, ${geoData[0].country}`;
           }
-        },
-        (err) => {
-          result.innerText = "⚠️ Could not get location: " + err.message;
+
+          currentLocation = { name: cityName, lat, lon };
+          updateSaveButton();
+          await checkConditions(cityName, lat, lon);
+        } catch (error) {
+          console.error('Error:', error);
+          result.innerText = "⚠️ Error getting location data. Please try searching by city name instead.";
         }
-      );
+      };
+
+      const onGeoError = async (err) => {
+        console.warn('Geolocation error:', err.code, err.message);
+
+        // Error code 2 = POSITION_UNAVAILABLE — try IP-based fallback
+        if (err.code === 2) {
+          result.innerText = "📡 GPS unavailable — trying approximate location via IP…";
+          try {
+            const ipRes = await fetch("https://ipapi.co/json/");
+            const ipData = await ipRes.json();
+            if (ipData.latitude && ipData.longitude) {
+              const cityName = [ipData.city, ipData.region, ipData.country_name].filter(Boolean).join(", ");
+              result.innerText = `📍 Using approximate location: ${cityName}`;
+              currentLocation = { name: cityName, lat: ipData.latitude, lon: ipData.longitude };
+              updateSaveButton();
+              await checkConditions(cityName, ipData.latitude, ipData.longitude);
+              return;
+            }
+          } catch (ipErr) {
+            console.warn('IP geolocation also failed:', ipErr);
+          }
+          result.innerHTML = `⚠️ Could not detect your location automatically.<br>
+            <strong>Try:</strong> searching by city name above, or ensure location services are enabled for your browser in System Settings.`;
+        } else if (err.code === 1) {
+          result.innerHTML = `🔒 Location permission denied.<br>
+            Please allow location access in your browser settings, or search by city name instead.`;
+        } else {
+          result.innerHTML = `⚠️ Location timed out. Please try again or search by city name.`;
+        }
+      };
+
+      navigator.geolocation.getCurrentPosition(onGeoSuccess, onGeoError, geoOptions);
     }
 
     function checkByCity() {
