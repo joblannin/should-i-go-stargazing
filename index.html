@@ -835,9 +835,13 @@
             nextNightEnd = new Date(astronomicalDawn.getTime() + 24*60*60*1000).getTime() / 1000;
         }
 
-        // Filter hourly forecasts for the next nighttime period
+        // Filter hourly forecasts: from NOW until next sunrise (tonight only, no daytime data)
+        const nowUnix = Math.floor(Date.now() / 1000);
+        const nextSunriseUnix = tomorrowTimes.sunrise instanceof Date && !isNaN(tomorrowTimes.sunrise)
+          ? Math.floor(tomorrowTimes.sunrise.getTime() / 1000)
+          : sunset + 12 * 3600;
         const hourlyForecasts = forecastData.list.filter(
-          (forecast) => forecast.dt >= nextNightStart && forecast.dt <= nextNightEnd
+          (forecast) => forecast.dt >= nowUnix && forecast.dt <= nextSunriseUnix
         );
 
         // Calculate average cloud cover
@@ -1015,7 +1019,6 @@
             <div class="moon-times">
               <div class="moon-time-row"><span>🌕 Moonrise</span><strong>${moonRiseStr}</strong></div>
               <div class="moon-time-row"><span>🌑 Moonset</span><strong>${moonSetStr}</strong></div>
-              <div class="moon-time-row moon-impact"><span colspan="2">${moonImpact}</span></div>
             </div>
             <div class="moon-links">
               <a href="https://spaceplace.nasa.gov/moon-phases/en/#:~:text=The%20Sun's%20light%20comes%20from,from%20Earth%20during%20each%20phase." target="_blank" class="moon-link">🌓 Moon Phases & Illumination</a>
