@@ -893,7 +893,10 @@
         output += `</div>`;
 
         // Add cloud info after recommendation
-        output += `<div class="cloud-info">☁️ Average cloud cover tonight: ${Math.round(avgClouds)}%</div>`;
+        const nightDateLabel = new Date(nextNightStart * 1000).toLocaleDateString('en-AU', {
+          weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC'
+        });
+        output += `<div class="cloud-info">☁️ Average cloud cover for the night of ${nightDateLabel}: ${Math.round(avgClouds)}%</div>`;
         
         // Add cloud forecast details
         output += `<div class="cloud-forecast">
