@@ -1439,14 +1439,31 @@
     function updateFavouritesList() {
       const favoritesList = document.getElementById('favoritesList');
       if (!favoritesList) return;
-      
+
       favoritesList.innerHTML = favorites.map((fav, index) => `
-        <div class="favorite-item">
+        <div class="favorite-item" data-index="${index}">
           <span>${fav.name.split(',')[0]}</span>
-          <button onclick="searchLocation('${fav.name}')">🔍</button>
-          <button onclick="removeFavourite(${index})">✕</button>
+          <button class="fav-search-btn" data-index="${index}" title="Search this location">🔍</button>
+          <button class="fav-remove-btn" data-index="${index}" title="Remove favourite">✕</button>
         </div>
       `).join('');
+
+      // Attach click handlers via JS (avoids inline onclick string-escaping issues)
+      favoritesList.querySelectorAll('.fav-search-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const fav = favorites[parseInt(btn.dataset.index)];
+          if (!fav) return;
+          currentLocation = { name: fav.name, lat: fav.lat, lon: fav.lon };
+          updateSaveButton();
+          const locationLabel = document.getElementById('current-location-label');
+          if (locationLabel) locationLabel.textContent = `📍 Showing results for: ${fav.name}`;
+          checkConditions(fav.name, fav.lat, fav.lon);
+        });
+      });
+
+      favoritesList.querySelectorAll('.fav-remove-btn').forEach(btn => {
+        btn.addEventListener('click', () => removeFavourite(parseInt(btn.dataset.index)));
+      });
     }
 
     function saveFavourite() {
