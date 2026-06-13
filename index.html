@@ -835,13 +835,12 @@
             nextNightEnd = new Date(astronomicalDawn.getTime() + 24*60*60*1000).getTime() / 1000;
         }
 
-        // Filter hourly forecasts: from NOW until next sunrise (tonight only, no daytime data)
-        const nowUnix = Math.floor(Date.now() / 1000);
+        // Filter hourly forecasts: sunset → next sunrise (dark hours only, regardless of when app is opened)
         const nextSunriseUnix = tomorrowTimes.sunrise instanceof Date && !isNaN(tomorrowTimes.sunrise)
           ? Math.floor(tomorrowTimes.sunrise.getTime() / 1000)
           : sunset + 12 * 3600;
         const hourlyForecasts = forecastData.list.filter(
-          (forecast) => forecast.dt >= nowUnix && forecast.dt <= nextSunriseUnix
+          (forecast) => forecast.dt >= sunset && forecast.dt <= nextSunriseUnix
         );
 
         // Calculate average cloud cover
