@@ -519,6 +519,13 @@
         <button id="searchBtn">Check by City</button>
         <button id="gpsBtn">Use My Location</button>
       </div>
+      <div id="current-location-label" style="
+        margin: 0.5rem 0 0 0;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        font-style: italic;
+        min-height: 1.2em;
+      "></div>
       <div id="result"></div>
     </div>
 
@@ -833,6 +840,10 @@
         }
 
         // Format the output with HTML
+        // Update the location label under the search buttons
+        const locationLabel = document.getElementById('current-location-label');
+        if (locationLabel) locationLabel.textContent = `📍 Showing results for: ${city}`;
+
         let output = `<div class="location-header">
           <span>📍 ${city}</span>
           <button class="save-favorite-btn" id="saveFavoriteBtn">Save as Favourite</button>
@@ -1422,6 +1433,8 @@
       }
 
       result.innerText = "📡 Getting location...";
+      const locationLabel = document.getElementById('current-location-label');
+      if (locationLabel) locationLabel.textContent = "📡 Detecting your location…";
 
       const geoOptions = {
         enableHighAccuracy: false, // faster, uses network/WiFi positioning
@@ -1705,5 +1718,19 @@
       addToHomeBtn.style.display = 'none';
     }
   </script>
+
+  <footer style="
+    max-width: 820px;
+    margin: 2rem auto 0;
+    padding: 1.25rem 1rem;
+    border-top: 1px solid var(--accent-border);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  ">
+    &copy; <span id="footer-year"></span> Dr Jo Blannin &nbsp;·&nbsp;
+    <a href="mailto:joblannin@gmail.com" style="color: var(--accent-dim); text-decoration: none;">joblannin@gmail.com</a>
+  </footer>
+  <script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
 </body>
 </html>
