@@ -260,28 +260,20 @@
 
     /* ── Planet section ─────────────────────────────────────────── */
     .planet-section { margin-top: 0.6rem; }
-    .planet-heading { font-size: 1.05rem; font-weight: bold; color: var(--accent); margin-bottom: 0.6rem; }
-    .planet-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .planet-card {
-      display: flex; align-items: flex-start; gap: 0.75rem;
-      padding: 0.6rem 0.75rem; border-radius: 10px;
-      border: 1px solid var(--accent-border);
-      background: rgba(255,255,255,0.04);
-      transition: background 0.2s;
+    .planet-heading { font-size: 1.05rem; font-weight: bold; color: var(--accent); margin-bottom: 0.5rem; }
+    .planet-list { display: flex; flex-direction: column; gap: 0.35rem; }
+    .planet-row {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.45rem 0.75rem; border-radius: 8px;
+      border: 1px solid transparent; font-size: 0.85rem;
     }
-    .planet-card.planet-down { opacity: 0.5; }
-    .planet-card:hover { background: rgba(255,255,255,0.07); }
-    .planet-symbol { font-size: 1.6rem; line-height: 1; min-width: 1.8rem; text-align: center; font-family: serif; }
-    .planet-card-body { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; }
-    .planet-name { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-    .planet-name a { color: var(--text-primary); font-weight: bold; font-size: 0.95rem; text-decoration: none; }
-    .planet-name a:hover { color: var(--accent); }
-    .planet-status { font-size: 0.75rem; border-radius: 20px; padding: 1px 8px; }
-    .planet-status.up   { color: var(--green-ok);  background: rgba(91,223,138,0.12); }
-    .planet-status.down { color: var(--text-muted); background: rgba(255,255,255,0.06); }
-    .planet-times { display: flex; gap: 1rem; font-size: 0.82rem; color: var(--text-secondary); flex-wrap: wrap; }
-    .planet-times strong { color: var(--text-primary); }
-    .planet-desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+    .planet-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .planet-row-name { font-weight: 600; min-width: 70px; }
+    .planet-row-times { color: var(--text-secondary); flex: 1; }
+    .planet-row-label { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
+    .planet-legend { display: flex; gap: 1rem; margin-top: 0.5rem; flex-wrap: wrap; }
+    .planet-legend-item { display: flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; color: var(--text-muted); }
+    .planet-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
     /* ── Cloud forecast ──────────────────────────────────────────── */
     .cloud-forecast { margin-top: 0.6rem; padding: 0.4rem 0; text-align: center; }
@@ -965,48 +957,49 @@
         // Add moon information
         const moon = getMoonPhase();
 
-        // Moon rise/set — check today and tomorrow to find the relevant times for tonight
+        // Helper: convert a UTC Date to a local time string for the searched location
+        // Uses the timezoneOffset (seconds) from the weather API — works regardless of user's device timezone
+        const fmtLocal = (d) => {
+          if (!(d instanceof Date) || isNaN(d)) return null;
+          return new Date(d.getTime() + timezoneOffset * 1000)
+            .toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' });
+        };
+
+        // Night window in ms (dusk → dawn)
+        const nightStartMs = nextNightStart * 1000;
+        const nightEndMs   = nextNightEnd   * 1000;
+        const nightDurMs   = nightEndMs - nightStartMs;
+
+        // Moon rise/set — look across today and tomorrow to find times inside or near the night window
         const moonTimesToday    = SunCalc.getMoonTimes(date,     lat, lon);
         const moonTimesTomorrow = SunCalc.getMoonTimes(tomorrow, lat, lon);
 
-        const fmtTime = (d) => d instanceof Date && !isNaN(d)
-          ? d.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: true })
-          : null;
+        // Collect all candidate rise/set times and pick the ones that fall within the night window,
+        // or the closest one outside it
+        const allRises = [moonTimesToday.rise, moonTimesTomorrow.rise].filter(d => d instanceof Date && !isNaN(d));
+        const allSets  = [moonTimesToday.set,  moonTimesTomorrow.set ].filter(d => d instanceof Date && !isNaN(d));
 
-        // Pick the rise that happens during or before tonight's window
-        const moonRiseDate = (moonTimesToday.rise && moonTimesToday.rise > new Date(nextNightStart * 1000))
-          ? moonTimesToday.rise
-          : (moonTimesTomorrow.rise && moonTimesTomorrow.rise < new Date(nextNightEnd * 1000))
-            ? moonTimesTomorrow.rise
-            : moonTimesToday.rise;
+        // Best rise = the one that is inside the night window, or closest to nightStart
+        const moonRiseDate = allRises.sort((a,b) => Math.abs(a - nightStartMs) - Math.abs(b - nightStartMs))[0] || null;
+        const moonSetDate  = allSets.sort( (a,b) => Math.abs(a - nightStartMs) - Math.abs(b - nightStartMs))[0] || null;
 
-        const moonSetDate = (moonTimesToday.set && moonTimesToday.set > new Date(nextNightStart * 1000))
-          ? moonTimesToday.set
-          : (moonTimesTomorrow.set && moonTimesTomorrow.set < new Date(nextNightEnd * 1000))
-            ? moonTimesTomorrow.set
-            : moonTimesToday.set;
+        const moonRiseStr = fmtLocal(moonRiseDate) || 'Does not rise tonight';
+        const moonSetStr  = fmtLocal(moonSetDate)  || 'Does not set tonight';
 
-        const moonRiseStr = fmtTime(moonRiseDate) || 'Does not rise';
-        const moonSetStr  = fmtTime(moonSetDate)  || 'Does not set';
-
-        // Work out how much of the night the moon is up
-        const nightDurMs  = (nextNightEnd - nextNightStart) * 1000;
-        const riseMs = moonRiseDate instanceof Date && !isNaN(moonRiseDate) ? moonRiseDate.getTime() : null;
-        const setMs  = moonSetDate  instanceof Date && !isNaN(moonSetDate)  ? moonSetDate.getTime()  : null;
-        const nightStartMs = nextNightStart * 1000;
-        const nightEndMs   = nextNightEnd   * 1000;
-
-        let moonUpDurMs = 0;
-        if (riseMs !== null || setMs !== null) {
-          const windowStart = riseMs !== null ? Math.max(riseMs, nightStartMs) : nightStartMs;
-          const windowEnd   = setMs  !== null ? Math.min(setMs,  nightEndMs)   : nightEndMs;
-          moonUpDurMs = Math.max(0, windowEnd - windowStart);
+        // Calculate how much of the night window the moon is actually above the horizon
+        // Sample altitude every 30 minutes across the night
+        const MOON_STEPS = 20;
+        let moonUpCount = 0;
+        for (let i = 0; i <= MOON_STEPS; i++) {
+          const t = new Date(nightStartMs + (i / MOON_STEPS) * nightDurMs);
+          const moonPos = SunCalc.getMoonPosition(t, lat, lon);
+          if (moonPos.altitude > 0) moonUpCount++;
         }
-        const moonUpPct = nightDurMs > 0 ? Math.round((moonUpDurMs / nightDurMs) * 100) : 0;
-        const moonImpact = moonUpPct === 0 ? '🟢 Moon absent — great for deep-sky'
-          : moonUpPct < 30               ? '🟡 Moon up briefly — mostly dark skies'
-          : moonUpPct < 60               ? '🟠 Moon up for part of the night'
-                                         : '🔴 Moon up most of the night — affects viewing';
+        const moonUpPct = Math.round((moonUpCount / (MOON_STEPS + 1)) * 100);
+        const moonImpact = moonUpPct === 0  ? '🟢 Moon below horizon all night — ideal for deep-sky'
+          : moonUpPct < 25                  ? '🟡 Moon up briefly — mostly dark skies'
+          : moonUpPct < 55                  ? '🟠 Moon up for part of the night'
+                                            : '🔴 Moon up most of the night — affects viewing';
 
         output += `<div class="moon-info">
           <div class="moon-heading">Moon Information</div>
@@ -1014,8 +1007,8 @@
             <div class="moon-phase">${moon.emoji} ${moon.phase}</div>
             <div class="moon-description">${moon.description}</div>
             <div class="moon-times">
-              <div class="moon-time-row"><span>🌕 Moonrise</span><strong>${moonRiseStr}</strong></div>
-              <div class="moon-time-row"><span>🌑 Moonset</span><strong>${moonSetStr}</strong></div>
+              <div class="moon-time-row"><span>🌕 Moonrise (local)</span><strong>${moonRiseStr}</strong></div>
+              <div class="moon-time-row"><span>🌑 Moonset (local)</span><strong>${moonSetStr}</strong></div>
               <div class="moon-time-row moon-impact"><span colspan="2">${moonImpact}</span></div>
             </div>
             <div class="moon-links">
@@ -1135,6 +1128,7 @@
                 name: bodyName,
                 emoji: planetEmojis[bodyName],
                 colour: planetColours[bodyName],
+                ra: eq.ra, dec: eq.dec,
                 riseTime, setTime, altNow, upDuringNight,
                 description: planetDescriptions[bodyName],
                 wiki: `https://en.wikipedia.org/wiki/${bodyName}`,
@@ -1153,31 +1147,55 @@
             <div class="planet-heading">🪐 Planets Tonight</div>
             <div class="planet-list">`;
 
+          // Helper: get local hour (0-23) from a UTC Date using weather API timezone offset
+          const localHour = (d) => {
+            if (!(d instanceof Date) || isNaN(d)) return null;
+            return new Date(d.getTime() + timezoneOffset * 1000).getUTCHours();
+          };
+
+          // Colour-code by best viewing time (local):
+          //  🟢 Green  = 18-23h (evening, 6pm-11pm)
+          //  🟠 Orange = 23-02h (late night, 11pm-2am)
+          //  🔴 Red    = 02-sunrise (early morning)
+          //  ⚫ Grey   = not up tonight
+          const viewingColour = (p) => {
+            if (!p.upDuringNight) return { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.08)', label: 'Not visible tonight', dot: '#666' };
+            // Find hour of peak altitude during the night
+            let bestHour = null, bestAlt = -90;
+            for (let i = 0; i <= 24; i++) {
+              const t = new Date(nightStartMs + (i / 24) * (nightEndMs - nightStartMs));
+              try {
+                const h = Astronomy.Horizon(t, new Astronomy.Observer(lat, lon, 0), p.ra, p.dec, 'normal');
+                if (h.altitude > bestAlt) { bestAlt = h.altitude; bestHour = localHour(t); }
+              } catch(e) {}
+            }
+            if (bestHour === null) return { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.08)', label: 'Not visible tonight', dot: '#666' };
+            if (bestHour >= 18 && bestHour < 23) return { bg: 'rgba(91,223,138,0.08)',  border: 'rgba(91,223,138,0.3)',  label: 'Evening (6pm–11pm)',   dot: '#5bdf8a' };
+            if (bestHour >= 23 || bestHour < 2)  return { bg: 'rgba(255,165,0,0.08)',   border: 'rgba(255,165,0,0.3)',   label: 'Late night (11pm–2am)', dot: '#ffa500' };
+            return                                       { bg: 'rgba(255,80,80,0.08)',   border: 'rgba(255,80,80,0.3)',   label: 'Early morning (2am+)',  dot: '#ff5050' };
+          };
+
           for (const p of planetRiseSetData) {
-            const statusLabel = p.upDuringNight
-              ? `<span class="planet-status up">● Visible tonight</span>`
-              : `<span class="planet-status down">● Below horizon</span>`;
+            const riseStr = fmtLocal(p.riseTime) || '—';
+            const setStr  = fmtLocal(p.setTime)  || '—';
+            const vc = viewingColour(p);
 
-            const riseStr = p.riseTime ? fmt(p.riseTime) : '—';
-            const setStr  = p.setTime  ? fmt(p.setTime)  : '—';
-
-            output += `<div class="planet-card ${p.upDuringNight ? 'planet-up' : 'planet-down'}">
-              <div class="planet-symbol" style="color:${p.colour}">${p.emoji}</div>
-              <div class="planet-card-body">
-                <div class="planet-name">
-                  <a href="${p.wiki}" target="_blank">${p.name}</a>
-                  ${statusLabel}
-                </div>
-                <div class="planet-times">
-                  <span>🌅 Rises: <strong>${riseStr}</strong></span>
-                  <span>🌇 Sets: <strong>${setStr}</strong></span>
-                </div>
-                <div class="planet-desc">${p.description}</div>
-              </div>
+            output += `<div class="planet-row" style="background:${vc.bg}; border-color:${vc.border}">
+              <span class="planet-dot" style="background:${vc.dot}"></span>
+              <span class="planet-row-name" style="color:${p.colour}">${p.name}</span>
+              <span class="planet-row-times">↑ ${riseStr} &nbsp; ↓ ${setStr}</span>
+              <span class="planet-row-label">${vc.label}</span>
             </div>`;
           }
 
-          output += `</div></div>`;
+          output += `</div>
+            <div class="planet-legend">
+              <span class="planet-legend-item"><span class="planet-legend-dot" style="background:#5bdf8a"></span> Evening (6pm–11pm)</span>
+              <span class="planet-legend-item"><span class="planet-legend-dot" style="background:#ffa500"></span> Late night (11pm–2am)</span>
+              <span class="planet-legend-item"><span class="planet-legend-dot" style="background:#ff5050"></span> Early morning (2am+)</span>
+              <span class="planet-legend-item"><span class="planet-legend-dot" style="background:#666"></span> Not visible tonight</span>
+            </div>
+          </div>`;
         }
 
         // ── Meteor shower calendar ────────────────────────────────────────────
