@@ -250,6 +250,10 @@
     .moon-details { display: flex; flex-direction: column; gap: 0.4rem; padding: 0.2rem 0; }
     .moon-phase { font-size: 1rem; text-align: center; font-weight: bold; }
     .moon-description { font-size: 0.88rem; text-align: center; color: var(--text-secondary); }
+    .moon-times { display: flex; flex-direction: column; gap: 0.3rem; margin: 0.4rem 0; padding: 0.5rem 0.75rem; background: rgba(255,255,255,0.04); border-radius: 8px; }
+    .moon-time-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; color: var(--text-secondary); }
+    .moon-time-row strong { color: var(--text-primary); }
+    .moon-impact { font-size: 0.82rem; margin-top: 0.2rem; padding-top: 0.35rem; border-top: 1px solid var(--accent-border); color: var(--text-secondary); }
     .moon-links { display: flex; flex-direction: row; justify-content: center; gap: 0.5rem; margin-top: 0.4rem; padding-top: 0.4rem; border-top: 1px solid var(--accent-border); flex-wrap: wrap; }
     .moon-link { color: var(--accent-dim); text-decoration: none; font-size: 0.88rem; padding: 0.3rem 0.5rem; border-radius: 4px; transition: all 0.2s; white-space: normal; display: inline-block; }
     .moon-link:hover { background: var(--accent-glow); color: var(--accent); }
@@ -935,11 +939,60 @@
 
         // Add moon information
         const moon = getMoonPhase();
+
+        // Moon rise/set — check today and tomorrow to find the relevant times for tonight
+        const moonTimesToday    = SunCalc.getMoonTimes(date,     lat, lon);
+        const moonTimesTomorrow = SunCalc.getMoonTimes(tomorrow, lat, lon);
+
+        const fmtTime = (d) => d instanceof Date && !isNaN(d)
+          ? d.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: true })
+          : null;
+
+        // Pick the rise that happens during or before tonight's window
+        const moonRiseDate = (moonTimesToday.rise && moonTimesToday.rise > new Date(nextNightStart * 1000))
+          ? moonTimesToday.rise
+          : (moonTimesTomorrow.rise && moonTimesTomorrow.rise < new Date(nextNightEnd * 1000))
+            ? moonTimesTomorrow.rise
+            : moonTimesToday.rise;
+
+        const moonSetDate = (moonTimesToday.set && moonTimesToday.set > new Date(nextNightStart * 1000))
+          ? moonTimesToday.set
+          : (moonTimesTomorrow.set && moonTimesTomorrow.set < new Date(nextNightEnd * 1000))
+            ? moonTimesTomorrow.set
+            : moonTimesToday.set;
+
+        const moonRiseStr = fmtTime(moonRiseDate) || 'Does not rise';
+        const moonSetStr  = fmtTime(moonSetDate)  || 'Does not set';
+
+        // Work out how much of the night the moon is up
+        const nightDurMs  = (nextNightEnd - nextNightStart) * 1000;
+        const riseMs = moonRiseDate instanceof Date && !isNaN(moonRiseDate) ? moonRiseDate.getTime() : null;
+        const setMs  = moonSetDate  instanceof Date && !isNaN(moonSetDate)  ? moonSetDate.getTime()  : null;
+        const nightStartMs = nextNightStart * 1000;
+        const nightEndMs   = nextNightEnd   * 1000;
+
+        let moonUpDurMs = 0;
+        if (riseMs !== null || setMs !== null) {
+          const windowStart = riseMs !== null ? Math.max(riseMs, nightStartMs) : nightStartMs;
+          const windowEnd   = setMs  !== null ? Math.min(setMs,  nightEndMs)   : nightEndMs;
+          moonUpDurMs = Math.max(0, windowEnd - windowStart);
+        }
+        const moonUpPct = nightDurMs > 0 ? Math.round((moonUpDurMs / nightDurMs) * 100) : 0;
+        const moonImpact = moonUpPct === 0 ? '🟢 Moon absent — great for deep-sky'
+          : moonUpPct < 30               ? '🟡 Moon up briefly — mostly dark skies'
+          : moonUpPct < 60               ? '🟠 Moon up for part of the night'
+                                         : '🔴 Moon up most of the night — affects viewing';
+
         output += `<div class="moon-info">
           <div class="moon-heading">Moon Information</div>
           <div class="moon-details">
             <div class="moon-phase">${moon.emoji} ${moon.phase}</div>
             <div class="moon-description">${moon.description}</div>
+            <div class="moon-times">
+              <div class="moon-time-row"><span>🌕 Moonrise</span><strong>${moonRiseStr}</strong></div>
+              <div class="moon-time-row"><span>🌑 Moonset</span><strong>${moonSetStr}</strong></div>
+              <div class="moon-time-row moon-impact"><span colspan="2">${moonImpact}</span></div>
+            </div>
             <div class="moon-links">
               <a href="https://spaceplace.nasa.gov/moon-phases/en/#:~:text=The%20Sun's%20light%20comes%20from,from%20Earth%20during%20each%20phase." target="_blank" class="moon-link">🌓 Moon Phases & Illumination</a>
               <a href="https://moon.nasa.gov/observe-the-moon-night/resources/moon-map/" target="_blank" class="moon-link">🌕 NASA Moon Map</a>
