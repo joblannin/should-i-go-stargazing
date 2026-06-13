@@ -1203,125 +1203,90 @@
           </div>
         </div>`;
 
-        // Update celestial objects list with Southern Hemisphere objects
+        // Celestial objects catalogue (RA in decimal hours, Dec in decimal degrees)
         const celestialObjects = [
           // Bright Stars
-          { name: "Sirius", type: "Star", ra: 6.75, dec: -16.7, magnitude: -1.46, description: "Brightest star in the night sky", wiki: "https://en.wikipedia.org/wiki/Sirius" },
-          { name: "Canopus", type: "Star", ra: 6.4, dec: -52.7, magnitude: -0.74, description: "Second brightest star", wiki: "https://en.wikipedia.org/wiki/Canopus" },
-          { name: "Alpha Centauri", type: "Star", ra: 14.66, dec: -60.8, magnitude: -0.27, description: "Closest star system to Earth", wiki: "https://en.wikipedia.org/wiki/Alpha_Centauri" },
-          { name: "Arcturus", type: "Star", ra: 14.26, dec: 19.2, magnitude: -0.05, description: "Bright orange giant star", wiki: "https://en.wikipedia.org/wiki/Arcturus" },
-          { name: "Vega", type: "Star", ra: 18.62, dec: 38.8, magnitude: 0.03, description: "Bright blue-white star", wiki: "https://en.wikipedia.org/wiki/Vega" },
-          { name: "Capella", type: "Star", ra: 5.28, dec: 46.0, magnitude: 0.08, description: "Bright yellow binary star", wiki: "https://en.wikipedia.org/wiki/Capella" },
-          { name: "Rigel", type: "Star", ra: 5.24, dec: -8.2, magnitude: 0.13, description: "Blue supergiant in Orion", wiki: "https://en.wikipedia.org/wiki/Rigel" },
-          { name: "Procyon", type: "Star", ra: 7.66, dec: 5.2, magnitude: 0.34, description: "Bright binary star", wiki: "https://en.wikipedia.org/wiki/Procyon" },
-          { name: "Achernar", type: "Star", ra: 1.63, dec: -57.2, magnitude: 0.46, description: "Brightest star in Eridanus", wiki: "https://en.wikipedia.org/wiki/Achernar" },
-          { name: "Betelgeuse", type: "Star", ra: 5.92, dec: 7.4, magnitude: 0.5, description: "Red supergiant in Orion", wiki: "https://en.wikipedia.org/wiki/Betelgeuse" },
-          { name: "Hadar", type: "Star", ra: 14.07, dec: -60.4, magnitude: 0.61, description: "Bright blue giant in Centaurus", wiki: "https://en.wikipedia.org/wiki/Beta_Centauri" },
-          { name: "Acrux", type: "Star", ra: 12.44, dec: -63.1, magnitude: 0.77, description: "Brightest star in Crux", wiki: "https://en.wikipedia.org/wiki/Alpha_Crucis" },
-          
+          { name: "Sirius",        type: "Star",             ra: 6.752,  dec: -16.72, magnitude: -1.46, description: "Brightest star in the night sky — dazzling blue-white", wiki: "https://en.wikipedia.org/wiki/Sirius" },
+          { name: "Canopus",       type: "Star",             ra: 6.399,  dec: -52.70, magnitude: -0.74, description: "Second brightest star — a supergiant 300 light-years away", wiki: "https://en.wikipedia.org/wiki/Canopus" },
+          { name: "Alpha Centauri",type: "Star",             ra: 14.660, dec: -60.83, magnitude: -0.27, description: "Closest star system to Earth, just 4.37 light-years away", wiki: "https://en.wikipedia.org/wiki/Alpha_Centauri" },
+          { name: "Arcturus",      type: "Star",             ra: 14.261, dec: 19.18,  magnitude: -0.05, description: "Bright orange giant — one of the oldest stars near the Sun", wiki: "https://en.wikipedia.org/wiki/Arcturus" },
+          { name: "Vega",          type: "Star",             ra: 18.616, dec: 38.78,  magnitude:  0.03, description: "Brilliant blue-white star and former North Pole star", wiki: "https://en.wikipedia.org/wiki/Vega" },
+          { name: "Capella",       type: "Star",             ra: 5.278,  dec: 46.00,  magnitude:  0.08, description: "Bright yellow binary star — actually four stars in two pairs", wiki: "https://en.wikipedia.org/wiki/Capella" },
+          { name: "Rigel",         type: "Star",             ra: 5.242,  dec: -8.20,  magnitude:  0.13, description: "Blue supergiant marking Orion's foot — 860 light-years away", wiki: "https://en.wikipedia.org/wiki/Rigel" },
+          { name: "Procyon",       type: "Star",             ra: 7.655,  dec: 5.22,   magnitude:  0.34, description: "Bright binary star in Canis Minor, 11 light-years away", wiki: "https://en.wikipedia.org/wiki/Procyon" },
+          { name: "Achernar",      type: "Star",             ra: 1.628,  dec: -57.24, magnitude:  0.46, description: "Brightest star in Eridanus — one of the flattest known stars", wiki: "https://en.wikipedia.org/wiki/Achernar" },
+          { name: "Betelgeuse",    type: "Star",             ra: 5.919,  dec: 7.41,   magnitude:  0.50, description: "Red supergiant in Orion — a future supernova candidate", wiki: "https://en.wikipedia.org/wiki/Betelgeuse" },
+          { name: "Hadar",         type: "Star",             ra: 14.064, dec: -60.37, magnitude:  0.61, description: "Bright blue giant in Centaurus, pointer star to the Southern Cross", wiki: "https://en.wikipedia.org/wiki/Beta_Centauri" },
+          { name: "Acrux",         type: "Star",             ra: 12.443, dec: -63.10, magnitude:  0.77, description: "Brightest star in the Southern Cross — a brilliant blue double star", wiki: "https://en.wikipedia.org/wiki/Alpha_Crucis" },
+          { name: "Antares",       type: "Star",             ra: 16.490, dec: -26.43, magnitude:  1.09, description: "Fiery red supergiant heart of Scorpius — rivalling Mars in colour", wiki: "https://en.wikipedia.org/wiki/Antares" },
+          { name: "Fomalhaut",     type: "Star",             ra: 22.961, dec: -29.62, magnitude:  1.16, description: "Lone bright star in the autumn sky — hosts a debris disc", wiki: "https://en.wikipedia.org/wiki/Fomalhaut" },
+
           // Deep Sky Objects
-          { name: "Omega Centauri", type: "Globular Cluster", ra: 13.67, dec: -47.5, magnitude: 3.7, description: "Largest globular cluster in Milky Way", wiki: "https://en.wikipedia.org/wiki/Omega_Centauri" },
-          { name: "47 Tucanae", type: "Globular Cluster", ra: 0.52, dec: -72.1, magnitude: 4.1, description: "Second brightest globular cluster", wiki: "https://en.wikipedia.org/wiki/47_Tucanae" },
-          { name: "Jewel Box", type: "Open Cluster", ra: 12.53, dec: -60.8, magnitude: 4.2, description: "Colorful star cluster in Crux", wiki: "https://en.wikipedia.org/wiki/Jewel_Box_(star_cluster)" },
-          { name: "Tarantula Nebula", type: "Nebula", ra: 5.53, dec: -69.1, magnitude: 5.0, description: "Largest star-forming region in Local Group", wiki: "https://en.wikipedia.org/wiki/Tarantula_Nebula" },
-          { name: "Carina Nebula", type: "Nebula", ra: 10.77, dec: -59.9, magnitude: 1.0, description: "Large star-forming region", wiki: "https://en.wikipedia.org/wiki/Carina_Nebula" }
+          { name: "Orion Nebula",       type: "Nebula",           ra: 5.588,  dec: -5.39,  magnitude: 4.0,  description: "Stunning stellar nursery — visible to the naked eye as a fuzzy star in Orion's sword", wiki: "https://en.wikipedia.org/wiki/Orion_Nebula" },
+          { name: "Andromeda Galaxy",   type: "Galaxy",           ra: 0.712,  dec: 41.27,  magnitude: 3.4,  description: "Our nearest large galactic neighbour — 2.5 million light-years away, naked-eye visible", wiki: "https://en.wikipedia.org/wiki/Andromeda_Galaxy" },
+          { name: "Pleiades",           type: "Star Cluster",     ra: 3.791,  dec: 24.12,  magnitude: 1.6,  description: "The Seven Sisters — iconic open cluster, beautiful in binoculars", wiki: "https://en.wikipedia.org/wiki/Pleiades" },
+          { name: "Omega Centauri",     type: "Globular Cluster", ra: 13.447, dec: -47.48, magnitude: 3.9,  description: "Largest globular cluster in the Milky Way — contains ~10 million stars", wiki: "https://en.wikipedia.org/wiki/Omega_Centauri" },
+          { name: "47 Tucanae",         type: "Globular Cluster", ra: 0.402,  dec: -72.08, magnitude: 4.1,  description: "Second brightest globular cluster — appears next to the Small Magellanic Cloud", wiki: "https://en.wikipedia.org/wiki/47_Tucanae" },
+          { name: "Jewel Box",          type: "Star Cluster",     ra: 12.894, dec: -60.37, magnitude: 4.2,  description: "Colourful cluster of blue, white and orange supergiant stars near the Southern Cross", wiki: "https://en.wikipedia.org/wiki/Jewel_Box_(star_cluster)" },
+          { name: "Tarantula Nebula",   type: "Nebula",           ra: 5.645,  dec: -69.10, magnitude: 5.0,  description: "Largest star-forming region in the Local Group — in the Large Magellanic Cloud", wiki: "https://en.wikipedia.org/wiki/Tarantula_Nebula" },
+          { name: "Eta Carinae Nebula", type: "Nebula",           ra: 10.747, dec: -59.87, magnitude: 1.0,  description: "One of the largest nebulae in the sky, surrounding an unstable hypergiant star", wiki: "https://en.wikipedia.org/wiki/Carina_Nebula" },
+          { name: "Large Magellanic Cloud", type: "Galaxy",       ra: 5.392,  dec: -69.76, magnitude: 0.9,  description: "Satellite galaxy of the Milky Way — a stunning naked-eye patch in southern skies", wiki: "https://en.wikipedia.org/wiki/Large_Magellanic_Cloud" },
+          { name: "Small Magellanic Cloud", type: "Galaxy",       ra: 0.872,  dec: -72.83, magnitude: 2.7,  description: "Dwarf galaxy companion to the Milky Way, packed with clusters and nebulae", wiki: "https://en.wikipedia.org/wiki/Small_Magellanic_Cloud" },
+          { name: "Hercules Cluster",   type: "Globular Cluster", ra: 16.695, dec: 36.46,  magnitude: 5.8,  description: "One of the finest globular clusters — contains ~300,000 stars in Hercules", wiki: "https://en.wikipedia.org/wiki/Messier_13" },
+          { name: "Lagoon Nebula",      type: "Nebula",           ra: 18.063, dec: -24.38, magnitude: 6.0,  description: "Large bright nebula in Sagittarius — visible to the naked eye under dark skies", wiki: "https://en.wikipedia.org/wiki/Lagoon_Nebula" },
+          { name: "Eagle Nebula",       type: "Nebula",           ra: 18.313, dec: -13.79, magnitude: 6.0,  description: "Home to the famous 'Pillars of Creation' — towering columns of gas and dust", wiki: "https://en.wikipedia.org/wiki/Eagle_Nebula" },
+          { name: "Whirlpool Galaxy",   type: "Galaxy",           ra: 13.498, dec: 47.19,  magnitude: 8.4,  description: "Classic spiral galaxy with a visible companion — great telescope target in Canes Venatici", wiki: "https://en.wikipedia.org/wiki/Whirlpool_Galaxy" },
+          { name: "Southern Pleiades",  type: "Star Cluster",     ra: 10.716, dec: -64.40, magnitude: 1.9,  description: "Dazzling southern open cluster near the Carina Nebula — rivals the Pleiades", wiki: "https://en.wikipedia.org/wiki/IC_2602" },
+          { name: "Centaurus A",        type: "Galaxy",           ra: 13.425, dec: -43.02, magnitude: 6.8,  description: "Closest radio galaxy to Earth — dramatic dark dust lane through its centre", wiki: "https://en.wikipedia.org/wiki/Centaurus_A" },
         ];
 
-        // Calculate object visibility and rise/set times
+        // Calculate altitude of an object using Local Sidereal Time (accurate, no external lib needed)
+        function getAltitudeDeg(ra_h, dec_deg, lat_deg, lon_deg, date) {
+          const toRad = d => d * Math.PI / 180;
+          const ra  = toRad(ra_h * 15);
+          const dec = toRad(dec_deg);
+          const lat = toRad(lat_deg);
+          const jd  = date.getTime() / 86400000 + 2440587.5;
+          const T   = (jd - 2451545.0) / 36525.0;
+          const GMST = (280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * T * T) % 360;
+          const LST  = toRad((GMST + lon_deg + 360) % 360);
+          const HA   = LST - ra;
+          const sinAlt = Math.sin(dec) * Math.sin(lat) + Math.cos(dec) * Math.cos(lat) * Math.cos(HA);
+          return Math.asin(Math.max(-1, Math.min(1, sinAlt))) * 180 / Math.PI;
+        }
+
+        // Check visibility: object must be above 15° at some point between dusk and dawn
         function getObjectVisibility(object, date, lat, lon) {
-          try {
-            console.log(`\nCalculating ${object.name} visibility:`);
-            console.log(`Location: lat ${lat}, lon ${lon}`);
-            console.log(`Current time: ${date.toLocaleString()}`);
-            
-            // Create an observer at the given location
-            const observer = Astronomy.Observer(lat, lon, 0);
-            
-            // Create a body for the object's position
-            const body = {
-              type: 'star',
-              ra: object.ra * 15, // Convert hours to degrees
-              dec: object.dec,
-              mag: object.magnitude
-            };
-            
-            // Calculate rise and set times
-            const riseSet = Astronomy.RiseSet(body, date, observer);
-            
-            // Convert times to local time
-            const riseTime = new Date(riseSet.rise.getTime() + timezoneOffset * 1000);
-            const setTime = new Date(riseSet.set.getTime() + timezoneOffset * 1000);
-            
-            // Format times
-            const formatTime = (date) => {
-              return date.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true,
-                timeZone: 'UTC'
-              });
-            };
+          const MIN_ALT = 15; // degrees — below this, atmosphere distorts too much
+          const STEPS   = 12; // check every hour across the night
 
-            // Log all relevant times
-            console.log(`Rise time: ${formatTime(riseTime)}`);
-            console.log(`Set time: ${formatTime(setTime)}`);
-            console.log(`Astronomical dusk: ${formatTime(astronomicalDusk)}`);
-            console.log(`Astronomical dawn: ${formatTime(astronomicalDawn)}`);
-
-            // Calculate visibility duration in minutes
-            let visibilityDuration = 0;
-            let isVisible = false;
-
-            // Check if object is circumpolar (never sets)
-            const isCircumpolar = (riseTime.getTime() === setTime.getTime());
-            if (isCircumpolar) {
-              console.log(`${object.name} is circumpolar - always visible`);
-              visibilityDuration = 24 * 60; // 24 hours in minutes
-              isVisible = true;
-              return {
-                riseTime: "Always up",
-                setTime: "Never sets",
-                isVisible: true,
-                duration: visibilityDuration
-              };
-            }
-
-            // An object is visible if ANY of these conditions are true:
-            // 1. It rises during the night (between dusk and dawn)
-            // 2. It's already up at dusk
-            // 3. It rises before dawn
-            isVisible = (
-              (riseTime >= astronomicalDusk && riseTime <= astronomicalDawn) || // Rises during night
-              (riseTime <= astronomicalDusk) ||  // Already up at dusk
-              (riseTime <= astronomicalDawn)     // Rises before dawn
-            );
-
-            // Calculate actual visibility duration during night
-            if (isVisible) {
-              const nightStart = Math.max(riseTime.getTime(), astronomicalDusk.getTime());
-              const nightEnd = Math.min(setTime.getTime(), astronomicalDawn.getTime());
-              visibilityDuration = (nightEnd - nightStart) / (1000 * 60); // Convert to minutes
-            }
-
-            console.log(`Visibility duration: ${visibilityDuration.toFixed(0)} minutes`);
-            console.log(`Visibility result: ${isVisible ? 'Visible' : 'Not visible'}`);
-            
-            return {
-              riseTime: formatTime(riseTime),
-              setTime: formatTime(setTime),
-              isVisible: isVisible,
-              duration: visibilityDuration
-            };
-          } catch (error) {
-            console.error(`Error calculating ${object.name} visibility:`, error);
-            // If there's an error, assume the object is visible
-            return {
-              riseTime: "N/A",
-              setTime: "N/A",
-              isVisible: true,
-              duration: 0
-            };
+          const duskMs  = astronomicalDusk.getTime();
+          const dawnMs  = astronomicalDawn.getTime();
+          const nightMs = dawnMs - duskMs;
+          if (nightMs <= 0) {
+            // Fallback: use midnight ± 4 hours
+            const mid = date.getTime();
+            const checks = Array.from({length: STEPS}, (_, i) => new Date(mid + (i - 6) * 3600000));
+            const maxAlt = Math.max(...checks.map(t => getAltitudeDeg(object.ra, object.dec, lat, lon, t)));
+            return { isVisible: maxAlt > MIN_ALT, altitude: maxAlt, duration: maxAlt > MIN_ALT ? 240 : 0 };
           }
+
+          let maxAlt = -90;
+          let visibleMinutes = 0;
+          const stepMs = nightMs / STEPS;
+
+          for (let i = 0; i <= STEPS; i++) {
+            const checkTime = new Date(duskMs + i * stepMs);
+            const alt = getAltitudeDeg(object.ra, object.dec, lat, lon, checkTime);
+            if (alt > maxAlt) maxAlt = alt;
+            if (alt > MIN_ALT) visibleMinutes += stepMs / 60000;
+          }
+
+          return {
+            isVisible: maxAlt > MIN_ALT,
+            altitude: maxAlt,
+            duration: visibleMinutes
+          };
         }
 
         // Add celestial objects section
@@ -1329,25 +1294,22 @@
           <div class="constellation-heading">Top Celestial Objects for Tonight</div>
           <div class="constellation-list">`;
         
-        // Filter, sort by duration, and take top 6
+        // Calculate visibility for all objects, filter, then pick best mix
         const visibleObjects = celestialObjects
           .map(object => {
             const visibility = getObjectVisibility(object, localTime, lat, lon);
             return { ...object, ...visibility };
           })
           .filter(object => object.isVisible)
-          .sort((a, b) => b.duration - a.duration);
+          .sort((a, b) => b.altitude - a.altitude);
 
-        // Separate stars and deep sky objects
-        const visibleStars = visibleObjects.filter(obj => obj.type === "Star");
+        // Pick up to 3 deep-sky objects and up to 3 stars for variety
+        const visibleStars  = visibleObjects.filter(obj => obj.type === "Star");
         const visibleDeepSky = visibleObjects.filter(obj => obj.type !== "Star");
-
-        // Take top 3 from each category
-        const topStars = visibleStars.slice(0, 3);
-        const topDeepSky = visibleDeepSky.slice(0, 3);
-
-        // Combine and sort by duration
-        const finalObjects = [...topStars, ...topDeepSky].sort((a, b) => b.duration - a.duration);
+        const finalObjects = [
+          ...visibleDeepSky.slice(0, 3),
+          ...visibleStars.slice(0, 3)
+        ].sort((a, b) => b.altitude - a.altitude);
         
         console.log(`\nTotal objects checked: ${celestialObjects.length}`);
         console.log(`Visible stars found: ${visibleStars.length}`);
@@ -1363,6 +1325,7 @@
             </div>`;
         } else {
           finalObjects.forEach(object => {
+            const altText = object.altitude > 0 ? ` · ${object.altitude.toFixed(0)}° above horizon` : '';
             output += `
               <div class="constellation-item">
                 <div class="constellation-name">
@@ -1372,7 +1335,7 @@
                 </div>
                 <div class="constellation-details">
                   ${object.description}<br>
-                  Magnitude: ${object.magnitude}
+                  Magnitude: ${object.magnitude}${altText}
                 </div>
               </div>`;
           });
