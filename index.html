@@ -1126,13 +1126,28 @@
               const hor = Astronomy.Horizon(localTime, observer, eq.ra, eq.dec, 'normal');
               const altNow = hor.altitude;
 
-              // Is it up at any point during sunset→sunrise?
-              // Recompute RA/Dec at each sample time so the sidereal time and
-              // position are both correct (avoids the localTime timezone-offset bug).
+              // upDuringNight: visible at ANY point between sunset and sunrise
+              // (used to show planet in the Planets Tonight list)
               const upDuringNight = (() => {
                 const steps = 24;
                 for (let i = 0; i <= steps; i++) {
                   const t = new Date(nightStart.getTime() + (i / steps) * (nightEnd - nightStart));
+                  try {
+                    const eqT = Astronomy.Equator(bodyName, t, observer, true, true);
+                    const h   = Astronomy.Horizon(t, observer, eqT.ra, eqT.dec, 'normal');
+                    if (h.altitude > 5) return true;
+                  } catch(e) {}
+                }
+                return false;
+              })();
+
+              // inEveningSky: visible in the first 4 hours after sunset
+              // (used to qualify for Top Celestial Objects — avoids listing 2 AM planets)
+              const eveningEnd = new Date(nightStart.getTime() + 4 * 3600 * 1000);
+              const inEveningSky = (() => {
+                const steps = 8;
+                for (let i = 0; i <= steps; i++) {
+                  const t = new Date(nightStart.getTime() + (i / steps) * (eveningEnd - nightStart));
                   try {
                     const eqT = Astronomy.Equator(bodyName, t, observer, true, true);
                     const h   = Astronomy.Horizon(t, observer, eqT.ra, eqT.dec, 'normal');
@@ -1147,7 +1162,7 @@
                 emoji: planetEmojis[bodyName],
                 colour: planetColours[bodyName],
                 ra: eq.ra, dec: eq.dec,
-                riseTime, setTime, altNow, upDuringNight,
+                riseTime, setTime, altNow, upDuringNight, inEveningSky,
                 description: planetDescriptions[bodyName],
                 wiki: `https://en.wikipedia.org/wiki/${bodyName}`,
               });
@@ -1164,7 +1179,7 @@
           // DEBUG — remove after confirming fix
           const _dbgNightStart = fmtLocal(new Date(sunset * 1000));
           const _dbgNightEnd   = fmtLocal(nextSunrise);
-          const _dbgUpFlags    = planetRiseSetData.map(p => `${p.name}:${p.upDuringNight?'UP':'NO'}`).join(' ');
+          const _dbgUpFlags    = planetRiseSetData.map(p => `${p.name}:${p.upDuringNight?'UP':'no'}/${p.inEveningSky?'EVE':'—'}`).join(' ');
           output += `<div style="font-size:10px;color:#ff0;padding:4px;word-break:break-all">
             DEBUG night: ${_dbgNightStart}→${_dbgNightEnd} | ${_dbgUpFlags}</div>`;
 
@@ -1299,9 +1314,11 @@
           "Meteor Shower": "🌠",
         };
 
-        // Build a lookup of which planets are actually up tonight (from Astronomy Engine — more accurate)
+        // Build a lookup of which planets are in the EVENING sky (sunset + 4h window).
+        // upDuringNight covers the whole night but many planets only rise at 2-4 AM —
+        // inEveningSky ensures only true evening objects appear in Top Celestial Objects.
         const planetsUpTonight = new Set(
-          planetRiseSetData.filter(p => p.upDuringNight).map(p => p.name)
+          planetRiseSetData.filter(p => p.inEveningSky).map(p => p.name)
         );
 
         // Calculate visibility for all objects, filter, then pick best mix
