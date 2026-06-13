@@ -1396,11 +1396,19 @@
           { name: "Taurus",       ra: 4.70,  dec: 17.5,  emoji: "🐂", description: "The Bull — contains the Pleiades and Hyades clusters, plus the Crab Nebula.", wiki: "https://en.wikipedia.org/wiki/Taurus_(constellation)" },
         ];
 
-        // Find top 3 constellations above the horizon tonight
+        // Find top 3 constellations visible tonight — sample peak altitude across the dark window
+        const _conNightStartMs = sunset * 1000;
+        const _conNightEndMs   = nextSunrise.getTime();
         const visibleConstellations = constellationCatalogue
           .map(c => {
-            const alt = getAltitudeDeg(c.ra, c.dec, lat, lon, localTime);
-            return { ...c, altitude: alt };
+            let peakAlt = -90;
+            const steps = 12;
+            for (let i = 0; i <= steps; i++) {
+              const t = new Date(_conNightStartMs + (i / steps) * (_conNightEndMs - _conNightStartMs));
+              const alt = getAltitudeDeg(c.ra, c.dec, lat, lon, t);
+              if (alt > peakAlt) peakAlt = alt;
+            }
+            return { ...c, altitude: peakAlt };
           })
           .filter(c => c.altitude > 20)
           .sort((a, b) => b.altitude - a.altitude)
