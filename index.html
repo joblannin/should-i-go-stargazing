@@ -965,42 +965,44 @@
             .toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' });
         };
 
-        // Night window in ms (dusk → dawn)
+        // Night window in ms (dusk → dawn) — kept for planet calculations
         const nightStartMs = nextNightStart * 1000;
         const nightEndMs   = nextNightEnd   * 1000;
         const nightDurMs   = nightEndMs - nightStartMs;
 
-        // Moon rise/set — look across today and tomorrow to find times inside or near the night window
+        // Dark window: sunset → next sunrise (the window that matters for moon impact)
+        const sunsetMs  = sunset * 1000;
+        const sunriseMs = tomorrowTimes.sunrise instanceof Date && !isNaN(tomorrowTimes.sunrise)
+          ? tomorrowTimes.sunrise.getTime()
+          : sunsetMs + 12 * 3600 * 1000; // fallback: 12h after sunset
+        const darkDurMs = sunriseMs - sunsetMs;
+
+        // Moon rise/set — only show times that actually fall within the dark window
         const moonTimesToday    = SunCalc.getMoonTimes(date,     lat, lon);
         const moonTimesTomorrow = SunCalc.getMoonTimes(tomorrow, lat, lon);
 
-        // Collect all candidate rise/set times and pick the ones that fall within the night window,
-        // or the closest one outside it
         const allRises = [moonTimesToday.rise, moonTimesTomorrow.rise].filter(d => d instanceof Date && !isNaN(d));
         const allSets  = [moonTimesToday.set,  moonTimesTomorrow.set ].filter(d => d instanceof Date && !isNaN(d));
 
-        // Best rise = the one that is inside the night window, or closest to nightStart
-        const moonRiseDate = allRises.sort((a,b) => Math.abs(a - nightStartMs) - Math.abs(b - nightStartMs))[0] || null;
-        const moonSetDate  = allSets.sort( (a,b) => Math.abs(a - nightStartMs) - Math.abs(b - nightStartMs))[0] || null;
+        // Only show rise/set if it falls within the sunset→sunrise window
+        const nightMoonRise = allRises.find(d => d.getTime() >= sunsetMs && d.getTime() <= sunriseMs) || null;
+        const nightMoonSet  = allSets.find( d => d.getTime() >= sunsetMs && d.getTime() <= sunriseMs) || null;
 
-        const moonRiseStr = fmtLocal(moonRiseDate) || 'Does not rise tonight';
-        const moonSetStr  = fmtLocal(moonSetDate)  || 'Does not set tonight';
+        // Is moon already above horizon at sunset?
+        const moonAtSunset = SunCalc.getMoonPosition(new Date(sunsetMs), lat, lon).altitude > 0;
 
-        // Sample moon altitude between SUNSET and next SUNRISE (the actual dark hours)
-        // sunset/sunrise are Unix timestamps (seconds) from the weather API / SunCalc
-        const sunsetMs  = sunset * 1000;                          // weather API sunset (UTC unix ms)
-        const sunriseMs = tomorrowTimes.sunrise.getTime();        // next morning's sunrise
-        const darkDurMs = sunriseMs - sunsetMs;
+        const moonRiseStr = nightMoonRise ? fmtLocal(nightMoonRise) : (moonAtSunset ? 'Already up at sunset' : 'Does not rise tonight');
+        const moonSetStr  = nightMoonSet  ? fmtLocal(nightMoonSet)  : (moonAtSunset ? 'Sets after sunrise'   : 'Already set before dark');
 
+        // Sample altitude every 30 min across the dark window to determine impact
         const MOON_STEPS = 24;
         let moonUpCount = 0;
         for (let i = 0; i <= MOON_STEPS; i++) {
           const t = new Date(sunsetMs + (i / MOON_STEPS) * darkDurMs);
-          const moonPos = SunCalc.getMoonPosition(t, lat, lon);
-          if (moonPos.altitude > 0) moonUpCount++;
+          if (SunCalc.getMoonPosition(t, lat, lon).altitude > 0) moonUpCount++;
         }
         const moonUpPct = Math.round((moonUpCount / (MOON_STEPS + 1)) * 100);
-        const moonImpact = moonUpPct === 0  ? '🟢 Moon below horizon all night — ideal for deep-sky'
+        const moonImpact = moonUpPct === 0  ? '🟢 Moon below horizon tonight — ideal for deep-sky'
           : moonUpPct < 25                  ? '🟡 Moon up briefly after dark — mostly dark skies'
           : moonUpPct < 55                  ? '🟠 Moon up for part of the night'
                                             : '🔴 Moon up most of the night — affects viewing';
@@ -1011,8 +1013,8 @@
             <div class="moon-phase">${moon.emoji} ${moon.phase}</div>
             <div class="moon-description">${moon.description}</div>
             <div class="moon-times">
-              <div class="moon-time-row"><span>🌕 Moonrise (local)</span><strong>${moonRiseStr}</strong></div>
-              <div class="moon-time-row"><span>🌑 Moonset (local)</span><strong>${moonSetStr}</strong></div>
+              <div class="moon-time-row"><span>🌕 Moonrise</span><strong>${moonRiseStr}</strong></div>
+              <div class="moon-time-row"><span>🌑 Moonset</span><strong>${moonSetStr}</strong></div>
               <div class="moon-time-row moon-impact"><span colspan="2">${moonImpact}</span></div>
             </div>
             <div class="moon-links">
