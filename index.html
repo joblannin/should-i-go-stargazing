@@ -798,17 +798,27 @@
         // Get today's astronomical events
         const todayTimes = SunCalc.getTimes(date, lat, lon);
         const tomorrowTimes = SunCalc.getTimes(tomorrow, lat, lon);
-        
+
+        // Compute the CORRECT next sunrise after tonight's sunset.
+        // Problem: tomorrowTimes.sunrise (24h from now) gives the sunrise 24+ hours away
+        // for UTC+10 locations — creating a 38-hour "night" window that spans daytime.
+        // Fix: ask SunCalc for the UTC day that contains 12h after sunset (the night midpoint).
+        // That always resolves to tomorrow morning's sunrise, regardless of app-open time.
+        const _nextSunriseResult = SunCalc.getTimes(new Date(sunset * 1000 + 12 * 3600 * 1000), lat, lon).sunrise;
+        const nextSunrise = _nextSunriseResult instanceof Date && !isNaN(_nextSunriseResult)
+          ? _nextSunriseResult
+          : new Date(sunset * 1000 + 12 * 3600 * 1000);
+
         // Get astronomical twilight times with fallback to sunset/sunrise + 1.5 hours
         let astronomicalDusk, astronomicalDawn;
-        
+
         if (todayTimes.astronomicalDusk && tomorrowTimes.astronomicalDawn) {
             astronomicalDusk = todayTimes.astronomicalDusk;
             astronomicalDawn = tomorrowTimes.astronomicalDawn;
         } else {
             // Fallback calculation if astronomical twilight is not available
             astronomicalDusk = new Date(todayTimes.sunset.getTime() + 1.5 * 60 * 60 * 1000);
-            astronomicalDawn = new Date(tomorrowTimes.sunrise.getTime() - 1.5 * 60 * 60 * 1000);
+            astronomicalDawn = new Date(nextSunrise.getTime() - 1.5 * 60 * 60 * 1000);
         }
         
         // Convert to Unix timestamps
@@ -836,9 +846,7 @@
         }
 
         // Filter hourly forecasts: sunset → next sunrise (dark hours only, regardless of when app is opened)
-        const nextSunriseUnix = tomorrowTimes.sunrise instanceof Date && !isNaN(tomorrowTimes.sunrise)
-          ? Math.floor(tomorrowTimes.sunrise.getTime() / 1000)
-          : sunset + 12 * 3600;
+        const nextSunriseUnix = Math.floor(nextSunrise.getTime() / 1000);
         const hourlyForecasts = forecastData.list.filter(
           (forecast) => forecast.dt >= sunset && forecast.dt <= nextSunriseUnix
         );
@@ -975,9 +983,7 @@
 
         // Dark window: sunset → next sunrise (the window that matters for moon impact)
         const sunsetMs  = sunset * 1000;
-        const sunriseMs = tomorrowTimes.sunrise instanceof Date && !isNaN(tomorrowTimes.sunrise)
-          ? tomorrowTimes.sunrise.getTime()
-          : sunsetMs + 12 * 3600 * 1000; // fallback: 12h after sunset
+        const sunriseMs = nextSunrise.getTime();
         const darkDurMs = sunriseMs - sunsetMs;
 
         // Moon rise/set — only show times that actually fall within the dark window
@@ -1090,11 +1096,9 @@
 
         if (window.Astronomy) {
           const observer  = new Astronomy.Observer(lat, lon, 0);
-          // Use sunset→sunrise as the night window (consistent with cloud/moon sections)
+          // Use sunset→nextSunrise as the night window (consistent with cloud/moon sections)
           const nightStart = new Date(sunset * 1000);
-          const nightEnd   = tomorrowTimes.sunrise instanceof Date && !isNaN(tomorrowTimes.sunrise)
-            ? tomorrowTimes.sunrise
-            : new Date(sunset * 1000 + 12 * 3600 * 1000);
+          const nightEnd   = nextSunrise;
 
           for (const bodyName of planetBodies) {
             try {
