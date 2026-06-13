@@ -16,6 +16,7 @@
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.min.js?v=1"></script>
   <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.0.0/astronomy.js"></script>
   <style>
+    *, *::before, *::after { box-sizing: border-box; }
     /* ── Design tokens ──────────────────────────────────────────── */
     :root {
       --bg-page:      #07041a;
@@ -292,11 +293,14 @@
     }
     .constellation-guide {
       margin: 1.5rem 0;
-      padding: 1.5rem;
+      padding: 1.25rem;
       background: linear-gradient(135deg, #1a1040 0%, #0d1b2a 100%);
       border-radius: 12px;
       border: 1px solid rgba(138, 100, 255, 0.3);
       box-shadow: 0 0 24px rgba(100, 60, 200, 0.2), 0 4px 12px rgba(0,0,0,0.4);
+      box-sizing: border-box;
+      width: 100%;
+      overflow: hidden;
     }
     .constellation-heading {
       font-size: 1.5rem;
@@ -316,13 +320,15 @@
     }
     .constellation-list {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 0.9rem;
-      margin-top: 0.5rem;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+      box-sizing: border-box;
+      width: 100%;
     }
     .constellation-item {
       background: linear-gradient(160deg, #241850 0%, #1a1035 100%);
-      padding: 1rem 1.1rem;
+      padding: 0.85rem 1rem;
       border-radius: 10px;
       border: 1px solid rgba(138, 100, 255, 0.25);
       text-align: left;
@@ -330,6 +336,8 @@
       flex-direction: column;
       gap: 0.3rem;
       transition: transform 0.2s, box-shadow 0.2s;
+      box-sizing: border-box;
+      min-width: 0;
     }
     .constellation-item:hover {
       transform: translateY(-2px);
@@ -342,8 +350,9 @@
     .constellation-name {
       font-weight: bold;
       color: #d4b8ff;
-      font-size: 1rem;
+      font-size: 0.95rem;
       margin-top: 0.2rem;
+      word-break: break-word;
     }
     .constellation-name a {
       color: inherit;
@@ -368,10 +377,12 @@
       font-weight: 600;
     }
     .constellation-details {
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       color: #b0a0cc;
       line-height: 1.4;
       flex-grow: 1;
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
     .wiki-link {
       display: inline-block;
