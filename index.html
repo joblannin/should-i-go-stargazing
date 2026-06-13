@@ -1282,13 +1282,21 @@
           "Meteor Shower": "🌠",
         };
 
+        // Build a lookup of which planets are actually up tonight (from Astronomy Engine — more accurate)
+        const planetsUpTonight = new Set(
+          planetRiseSetData.filter(p => p.upDuringNight).map(p => p.name)
+        );
+
         // Calculate visibility for all objects, filter, then pick best mix
         const visibleObjects = celestialObjects
           .map(object => {
             const visibility = getObjectVisibility(object, localTime, lat, lon);
             return { ...object, ...visibility };
           })
-          .filter(object => object.isVisible)
+          .filter(object => {
+            if (object.type === "Planet") return planetsUpTonight.has(object.name);
+            return object.isVisible;
+          })
           .sort((a, b) => b.altitude - a.altitude);
 
         // Pick a varied mix: planets first (always interesting), then meteor showers,
