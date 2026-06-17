@@ -1810,17 +1810,8 @@
       }
     });
 
-    // Load default location on page load: Mount Burnett, Victoria
-    (async () => {
-      const defaultCity = "Mount Burnett, Victoria, AU";
-      const defaultLat  = -37.9333;
-      const defaultLon  = 145.4833;
-      currentLocation = { name: defaultCity, lat: defaultLat, lon: defaultLon };
-      updateSaveButton();
-      const locationLabel = document.getElementById('current-location-label');
-      if (locationLabel) locationLabel.textContent = `📍 Showing results for: ${defaultCity}`;
-      await checkConditions(defaultCity, defaultLat, defaultLon);
-    })();
+    // On startup, detect the device's location automatically
+    useMyLocation();
 
     // Add to Home Screen functionality
     let deferredPrompt;
