@@ -1488,7 +1488,7 @@
                 <div class="lp-badge" style="background:${badgeColors[lp.bortle]};color:${textColors[lp.bortle]};border:2px solid ${textColors[lp.bortle]}44">${lp.bortle}</div>
                 <div class="lp-info">
                   <div class="lp-label" style="color:${textColors[lp.bortle]}">${lp.label}</div>
-                  <div style="color:${textColors[lp.bortle]};font-size:0.8rem;margin-bottom:0.2rem">${stars}</div>
+                  <div style="color:${textColors[lp.bortle]};font-size:0.8rem;margin-bottom:0.2rem">${stars}${lp.sqm ? `  <span style="color:var(--text-muted);font-weight:normal">SQM ${lp.sqm.toFixed(1)}</span>` : ''}</div>
                   <div class="lp-desc">${lp.description}</div>
                   <a class="lp-link" href="https://www.lightpollutionmap.info/#zoom=8&lat=${lat}&lng=${lon}" target="_blank">View on Light Pollution Map →</a>
                 </div>
