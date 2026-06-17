@@ -275,6 +275,25 @@
     .planet-legend-item { display: flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; color: var(--text-muted); }
     .planet-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
+    /* ── Light pollution section ─────────────────────────────────── */
+    .lp-section { margin-top: 0.6rem; }
+    .lp-heading { font-size: 1.05rem; font-weight: bold; color: var(--accent); margin-bottom: 0.5rem; }
+    .lp-card {
+      display: flex; align-items: center; gap: 0.9rem;
+      padding: 0.75rem 1rem; border-radius: 10px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+    }
+    .lp-badge {
+      flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; font-weight: 900; color: #fff;
+    }
+    .lp-info { flex: 1; }
+    .lp-label { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.2rem; }
+    .lp-desc { font-size: 0.8rem; color: var(--text-secondary); }
+    .lp-link { font-size: 0.78rem; color: var(--accent-blue); text-decoration: none; margin-top: 0.15rem; display: inline-block; }
+    .lp-link:hover { text-decoration: underline; }
+
     /* ── Cloud forecast ──────────────────────────────────────────── */
     .cloud-forecast { margin-top: 0.6rem; padding: 0.4rem 0; text-align: center; }
     .cloud-forecast > div:first-child { font-weight: bold; margin-bottom: 0.4rem; color: var(--accent); }
@@ -928,6 +947,12 @@
         const nightDateLabel = new Date(nextNightStart * 1000).toLocaleDateString('en-AU', {
           weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC'
         });
+        // Light pollution placeholder — populated async after render
+        output += `<div id="lp-section-container"><div class="lp-section">
+          <div class="lp-heading">💡 Light Pollution</div>
+          <div class="lp-card"><div class="lp-desc" style="color:var(--text-muted)">Loading light pollution data…</div></div>
+        </div></div>`;
+
         output += `<div class="cloud-info">☁️ Average cloud cover for the night of ${nightDateLabel}: ${Math.round(avgClouds)}%</div>`;
         
         // Add cloud forecast details
@@ -1438,6 +1463,44 @@
 
 
         result.innerHTML = output;
+
+        // Fetch light pollution data async and update placeholder
+        (async () => {
+          const lpContainer = document.getElementById('lp-section-container');
+          if (!lpContainer) return;
+          try {
+            const lpRes = await fetch(`/.netlify/functions/lightpollution?lat=${lat}&lon=${lon}`);
+            const lp = await lpRes.json();
+            if (!lpRes.ok || lp.error) throw new Error(lp.error || 'API error');
+
+            const badgeColors = {
+              1:'#0d0d1a',2:'#0a1628',3:'#0a2040',4:'#0f3d0f',
+              5:'#3a4400',6:'#6b4800',7:'#7a2800',8:'#7a0f00',9:'#5a0000'
+            };
+            const textColors = {
+              1:'#a0c4ff',2:'#90b8ff',3:'#70a0ff',4:'#80d080',
+              5:'#d4e000',6:'#ffb030',7:'#ff7030',8:'#ff3010',9:'#ff1010'
+            };
+            const stars = lp.bortle <= 2 ? '★★★★★' : lp.bortle <= 4 ? '★★★★☆' : lp.bortle <= 6 ? '★★★☆☆' : lp.bortle <= 7 ? '★★☆☆☆' : '★☆☆☆☆';
+            lpContainer.innerHTML = `<div class="lp-section">
+              <div class="lp-heading">💡 Light Pollution</div>
+              <div class="lp-card">
+                <div class="lp-badge" style="background:${badgeColors[lp.bortle]};color:${textColors[lp.bortle]};border:2px solid ${textColors[lp.bortle]}44">${lp.bortle}</div>
+                <div class="lp-info">
+                  <div class="lp-label" style="color:${textColors[lp.bortle]}">${lp.label}</div>
+                  <div style="color:${textColors[lp.bortle]};font-size:0.8rem;margin-bottom:0.2rem">${stars}</div>
+                  <div class="lp-desc">${lp.description}</div>
+                  <a class="lp-link" href="https://www.lightpollutionmap.info/#zoom=8&lat=${lat}&lng=${lon}" target="_blank">View on Light Pollution Map →</a>
+                </div>
+              </div>
+            </div>`;
+          } catch (e) {
+            lpContainer.innerHTML = `<div class="lp-section">
+              <div class="lp-heading">💡 Light Pollution</div>
+              <div class="lp-card"><div class="lp-desc" style="color:var(--text-muted)">Light pollution data unavailable for this location.</div></div>
+            </div>`;
+          }
+        })();
 
         // Update map
         if (map) {
